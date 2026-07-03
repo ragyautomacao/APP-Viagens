@@ -475,12 +475,42 @@ function somarPedagios(){
 
 /* -------- geocodificação e clima via Open-Meteo (gratuito, sem chave) -------- */
 async function geocodificar(nomeCidade){
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(nomeCidade)}&count=1&language=pt&format=json`;
-  const r = await fetch(url);
-  const j = await r.json();
-  if(!j.results || !j.results.length) throw new Error(`"${nomeCidade}" não encontrado. Use o nome de uma cidade ou município — ex: "Penha, SC" em vez de "Beto Carreiro World", ou "Ubatuba, SP" em vez do nome do hotel.`);
-  const res = j.results[0];
-  return {lat:res.latitude, lon:res.longitude, nome:`${res.name}${res.admin1? ', '+res.admin1:''}`};
+  let nomeLimpo = nomeCidade.trim();
+  let res = await buscarOpenMeteo(nomeLimpo);
+  
+  if (!res && (nomeLimpo.includes(',') || nomeLimpo.includes('-'))) {
+    const partes = nomeLimpo.split(/[,|-]/);
+    if (partes[0].trim().length >= 2) {
+      res = await buscarOpenMeteo(partes[0].trim());
+    }
+  }
+
+  if (!res && nomeLimpo.includes(' ')) {
+    const partes = nomeLimpo.split(/\s+/);
+    if (partes.length > 1) {
+      const ultima = partes[partes.length - 1];
+      if (ultima.length === 2 && ultima === ultima.toUpperCase()) {
+        const semEstado = partes.slice(0, -1).join(' ').trim();
+        res = await buscarOpenMeteo(semEstado);
+      }
+    }
+  }
+
+  if(!res) throw new Error(`"${nomeCidade}" não encontrado. Tente digitar apenas o nome da cidade (ex: "Penha" em vez de "Penha, SC").`);
+  return res;
+}
+
+async function buscarOpenMeteo(nome) {
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(nome)}&count=1&language=pt&format=json`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if(!j.results || !j.results.length) return null;
+    const res = j.results[0];
+    return {lat:res.latitude, lon:res.longitude, nome:`${res.name}${res.admin1? ', '+res.admin1:''}`};
+  } catch(e) {
+    return null;
+  }
 }
 
 function haversineKm(lat1,lon1,lat2,lon2){
