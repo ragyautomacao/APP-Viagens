@@ -3,932 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rota Certa — Planejador de Viagem em Família v2</title>
+<title>Rota Certa — Planejador de Viagem Profissional</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
-  :root{
-    --asfalto:#12161D;
-    --asfalto-2:#1B212B;
-    --card:#1E2530;
-    --linha:#2A3240;
-    --amarelo:#FFC93C;
-    --verde:#22A366;
-    --verde-esc:#17693F;
-    --vermelho:#E4572E;
-    --texto:#F1F1EC;
-    --texto-mudo:#98A2B3;
-    --branco-faixa: rgba(255,201,60,.55);
-    --radius: 14px;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      radial-gradient(1200px 600px at 15% -10%, #1A2C24 0%, transparent 60%),
-      radial-gradient(1000px 500px at 100% 0%, #241C13 0%, transparent 55%),
-      var(--asfalto);
-    color:var(--texto);
-    font-family:'Inter',sans-serif;
-    line-height:1.5;
-    -webkit-font-smoothing:antialiased;
-  }
-  h1,h2,h3,.display{font-family:'Rajdhani',sans-serif; text-transform:uppercase; letter-spacing:.02em;}
-  .mono{font-family:'Roboto Mono',monospace;}
-  a{color:var(--amarelo);}
-
-  /* ---------- topo / hero ---------- */
-  .faixa-topo{
-    height:6px;
-    background:repeating-linear-gradient(90deg, var(--amarelo) 0 38px, transparent 38px 66px);
-    opacity:.9;
-  }
-  header.hero{
-    max-width:1180px;margin:0 auto;padding:56px 24px 28px;
-    display:flex;flex-direction:column;gap:10px;
-  }
-  .eyebrow{
-    color:var(--amarelo); font-family:'Roboto Mono',monospace; font-size:12.5px;
-    letter-spacing:.18em; text-transform:uppercase; display:flex; align-items:center; gap:10px;
-  }
-  .eyebrow::before{content:"";width:22px;height:2px;background:var(--amarelo);display:inline-block;}
-  header.hero h1{font-size:clamp(34px,5.4vw,58px); font-weight:700; margin:0; line-height:.98;}
-  header.hero h1 span{color:var(--verde);}
-  header.hero p{color:var(--texto-mudo); max-width:640px; font-size:16px; margin:2px 0 0;}
-
-  main{max-width:1180px;margin:0 auto;padding:8px 24px 100px;}
-
-  /* ---------- formulário ---------- */
-  .painel{
-    background:var(--card); border:1px solid var(--linha); border-radius:var(--radius);
-    padding:28px; margin-bottom:28px;
-  }
-  .painel h2{font-size:22px;margin:0 0 4px;display:flex;align-items:center;gap:10px;}
-  .painel h2 .num{color:var(--asfalto);background:var(--amarelo);width:26px;height:26px;border-radius:6px;
-    display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-family:'Roboto Mono',monospace;}
-  .painel .sub{color:var(--texto-mudo);font-size:13.5px;margin:0 0 20px;}
-
-  .modo-toggle{display:flex;gap:10px;margin-bottom:22px;}
-  .modo-toggle button{
-    flex:1; padding:14px; border-radius:10px; border:1px solid var(--linha); background:var(--asfalto-2);
-    color:var(--texto-mudo); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:16px;
-    letter-spacing:.03em; text-transform:uppercase; cursor:pointer; transition:.15s;
-  }
-  .modo-toggle button.ativo{background:var(--verde-esc);border-color:var(--verde);color:#fff;}
-  .modo-toggle button:hover{border-color:var(--amarelo);}
-
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
-  .campo{display:flex;flex-direction:column;gap:6px;}
-  .campo label{font-size:12.5px;color:var(--texto-mudo);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
-  .campo input, .campo select, .campo textarea{
-    background:var(--asfalto-2); border:1px solid var(--linha); border-radius:8px; color:var(--texto);
-    padding:11px 12px; font-size:14.5px; font-family:'Inter',sans-serif; outline:none;
-  }
-  .campo input:focus, .campo select:focus, .campo textarea:focus{border-color:var(--amarelo);}
-  .campo small{color:var(--texto-mudo);font-size:11.5px;}
-  .linha-check{display:flex;align-items:center;gap:8px;margin-top:4px;}
-  .linha-check input{width:16px;height:16px;accent-color:var(--verde);}
-  .linha-check label{font-size:13.5px;color:var(--texto);text-transform:none;letter-spacing:0;font-weight:400;}
-
-  details.avancado{margin-top:22px;border-top:1px dashed var(--linha);padding-top:16px;}
-  details.avancado summary{cursor:pointer;color:var(--amarelo);font-size:13.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
-  details.avancado .grid{margin-top:16px;}
-  .aviso{
-    background:rgba(228,87,46,.1); border:1px solid rgba(228,87,46,.35); color:#F3B6A0;
-    padding:10px 12px; border-radius:8px; font-size:12.5px; margin-top:14px;
-  }
-
-  .btn-principal{
-    margin-top:24px; width:100%; padding:16px; border:none; border-radius:10px;
-    background:linear-gradient(90deg, var(--amarelo), #FFDE85); color:#14181F;
-    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:19px; letter-spacing:.03em;
-    text-transform:uppercase; cursor:pointer; transition:.15s;
-  }
-  .btn-principal:hover{filter:brightness(1.06);}
-  .btn-principal:disabled{opacity:.55;cursor:wait;}
-
-  .btn-sec{
-    padding:10px 16px;border-radius:8px;border:1px solid var(--linha);background:var(--asfalto-2);
-    color:var(--texto);font-size:13px;cursor:pointer;font-family:'Inter';
-  }
-  .btn-sec:hover{border-color:var(--amarelo);}
-
-  /* ---------- resumo ---------- */
-  #resultado{display:none;}
-  .resumo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:28px;}
-  .resumo-card{background:var(--card);border:1px solid var(--linha);border-radius:12px;padding:18px;}
-  .resumo-card .rotulo{font-size:11.5px;color:var(--texto-mudo);text-transform:uppercase;letter-spacing:.07em;}
-  .resumo-card .valor{font-family:'Roboto Mono',monospace;font-size:26px;font-weight:700;margin-top:6px;color:var(--amarelo);}
-  .resumo-card .valor.verde{color:var(--verde);}
-  .resumo-card .extra{font-size:12px;color:var(--texto-mudo);margin-top:4px;}
-
-  /* ---------- clima ---------- */
-  .clima-card{display:flex;align-items:center;gap:16px;}
-  .clima-card .icone{font-size:34px;}
-
-  /* ---------- estrada / roteiro interativo ---------- */
-  .estrada{position:relative;margin:8px 0 30px;padding-left:46px;}
-  .estrada::before{
-    content:"";position:absolute;left:20px;top:6px;bottom:6px;width:3px;
-    background:repeating-linear-gradient(180deg, var(--amarelo) 0 16px, transparent 16px 30px);
-  }
-  .parada{position:relative;background:var(--card);border:1px solid var(--linha);border-radius:12px;
-    padding:16px 18px;margin-bottom:16px;}
-  .parada::before{
-    content:"";position:absolute;left:-38px;top:18px;width:16px;height:16px;border-radius:50%;
-    background:var(--verde);border:3px solid var(--asfalto);
-  }
-  .parada.partida::before, .parada.chegada::before{background:var(--amarelo);}
-  .parada .topo-parada{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;}
-  .parada .km{font-family:'Roboto Mono',monospace;color:var(--amarelo);font-size:12.5px;}
-  .parada h3{margin:2px 0 4px;font-size:19px;}
-  .parada p{margin:0;color:var(--texto-mudo);font-size:13.5px;}
-  .parada .horario{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--verde);}
-  .tag{display:inline-block;background:var(--asfalto-2);border:1px solid var(--linha);color:var(--texto-mudo);
-    font-size:11px;padding:3px 8px;border-radius:20px;margin-top:8px;margin-right:6px;text-transform:uppercase;letter-spacing:.05em;}
-
-  /* ---------- pedágios ---------- */
-  table.pedagios{width:100%;border-collapse:collapse;margin-top:10px;}
-  table.pedagios th{text-align:left;font-size:11.5px;color:var(--texto-mudo);text-transform:uppercase;letter-spacing:.05em;
-    padding:8px 6px;border-bottom:1px solid var(--linha);}
-  table.pedagios td{padding:9px 6px;border-bottom:1px solid var(--linha);font-size:14px;}
-  table.pedagios input{width:100%;background:var(--asfalto-2);border:1px solid var(--linha);border-radius:6px;color:var(--texto);padding:7px 8px;font-size:13.5px;}
-  table.pedagios td.rm{width:36px;text-align:center;}
-  table.pedagios td.rm button{background:none;border:none;color:var(--vermelho);cursor:pointer;font-size:15px;}
-  .total-pedagio{text-align:right;margin-top:10px;font-family:'Roboto Mono',monospace;font-size:15px;}
-
-  /* ---------- checklist ---------- */
-  .checklist{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
-  .item-check{display:flex;align-items:center;gap:10px;background:var(--asfalto-2);border:1px solid var(--linha);
-    border-radius:8px;padding:11px 12px;cursor:pointer;font-size:13.5px;}
-  .item-check input{width:16px;height:16px;accent-color:var(--verde);}
-  .item-check.feito{opacity:.5;text-decoration:line-through;}
-
-  /* ---------- assistente IA ---------- */
-  .chat-box{background:var(--asfalto-2);border:1px solid var(--linha);border-radius:10px;padding:14px;
-    max-height:340px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:10px;}
-  .msg{max-width:85%;padding:10px 13px;border-radius:10px;font-size:13.5px;}
-  .msg.user{align-self:flex-end;background:var(--verde-esc);color:#fff;}
-  .msg.ia{align-self:flex-start;background:#2A3240;color:var(--texto);}
-  .chat-input{display:flex;gap:10px;}
-  .chat-input input{flex:1;}
-
-  footer{max-width:1180px;margin:0 auto;padding:20px 24px 60px;color:var(--texto-mudo);font-size:12px;text-align:center;}
-
-  @media print{
-    .painel, .btn-principal, .btn-sec, details, header .eyebrow{display:none!important;}
-    body{background:#fff;color:#000;}
-    .parada, .resumo-card{border:1px solid #ccc;background:#fff;color:#000;}
-  }
-
-  @media (prefers-reduced-motion: reduce){ *{transition:none!important;} }
+:root{--asfalto:#11161d;--asfalto2:#1a202a;--card:#1f2733;--line:#303947;--yellow:#ffc93c;--green:#22a366;--red:#e4572e;--text:#f4f1e9;--muted:#a5afbd;--blue:#5da8ff;--radius:16px}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(900px 440px at 10% 0,#1e3a2d 0,transparent 60%),radial-gradient(900px 500px at 100% 0,#2f2112 0,transparent 55%),var(--asfalto);color:var(--text);font-family:Inter,sans-serif;line-height:1.48}h1,h2,h3,.display{font-family:Rajdhani,sans-serif;text-transform:uppercase;letter-spacing:.02em}a{color:var(--yellow)}.mono{font-family:"Roboto Mono",monospace}.topline{height:7px;background:repeating-linear-gradient(90deg,var(--yellow) 0 42px,transparent 42px 70px)}header{max-width:1220px;margin:auto;padding:48px 22px 22px}.eyebrow{font-family:"Roboto Mono",monospace;font-size:12px;letter-spacing:.16em;color:var(--yellow);text-transform:uppercase}h1{font-size:clamp(36px,5.6vw,66px);margin:8px 0 8px;line-height:.94}h1 span{color:var(--green)}header p{max-width:820px;color:var(--muted);margin:0}.wrap{max-width:1220px;margin:auto;padding:8px 22px 90px}.panel{background:rgba(31,39,51,.94);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin:18px 0;box-shadow:0 18px 48px rgba(0,0,0,.18)}.panel h2{display:flex;align-items:center;gap:10px;margin:0 0 5px;font-size:24px}.num{width:29px;height:29px;border-radius:8px;background:var(--yellow);color:#11161d;display:inline-flex;align-items:center;justify-content:center;font-family:"Roboto Mono",monospace;font-size:14px}.sub{color:var(--muted);font-size:13px;margin:0 0 17px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}.field input,.field select,.field textarea{background:var(--asfalto2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:12px 12px;font:14px Inter,sans-serif;outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--yellow)}.hint{font-size:11px;color:var(--muted)}.checks{display:flex;gap:16px;flex-wrap:wrap}.checks label{display:flex;gap:8px;align-items:center;color:var(--text);font-size:14px}.checks input{accent-color:var(--green)}details{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}summary{cursor:pointer;color:var(--yellow);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em}.btn{border:0;border-radius:12px;padding:14px 18px;cursor:pointer;font-family:Rajdhani,sans-serif;font-weight:700;text-transform:uppercase;font-size:18px;letter-spacing:.03em}.btn-main{width:100%;margin-top:22px;background:linear-gradient(90deg,var(--yellow),#ffe69a);color:#11161d}.btn-sec{background:var(--asfalto2);border:1px solid var(--line);color:var(--text);font-size:14px;padding:10px 14px}.btn:disabled{opacity:.6;cursor:wait}.status{margin-top:12px;color:var(--muted);font-size:13px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px}.card{background:var(--asfalto2);border:1px solid var(--line);border-radius:14px;padding:16px}.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.value{font-family:"Roboto Mono",monospace;font-size:25px;font-weight:700;color:var(--yellow);margin-top:5px}.extra{font-size:12px;color:var(--muted);margin-top:4px}.good{color:var(--green)}.warn{color:var(--red)}#resultado{display:none}#map{height:520px;border-radius:16px;border:1px solid var(--line);overflow:hidden;background:#0d131a}.split{display:grid;grid-template-columns:1.4fr .8fr;gap:18px}.route-list{display:flex;flex-direction:column;gap:11px}.stop{background:var(--asfalto2);border:1px solid var(--line);border-radius:13px;padding:14px}.stop h3{font-size:18px;margin:0 0 5px}.stop p{color:var(--muted);margin:0;font-size:13px}.tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;background:#263140;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:9px 6px;text-align:left;font-size:13px}th{color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:11px}.checkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px}.checkgroup{background:var(--asfalto2);border:1px solid var(--line);border-radius:14px;padding:14px}.checkgroup h3{margin:0 0 8px;font-size:18px}.checkitem{display:flex;gap:9px;align-items:flex-start;padding:7px 0;color:var(--text);font-size:13.5px}.checkitem input{margin-top:2px;accent-color:var(--green)}.checkitem.done{opacity:.55;text-decoration:line-through}.chatbox{background:var(--asfalto2);border:1px solid var(--line);border-radius:14px;max-height:330px;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:9px}.msg{max-width:86%;border-radius:12px;padding:10px 12px;font-size:13.5px;white-space:pre-wrap}.msg.user{align-self:flex-end;background:#17693f}.msg.ia{align-self:flex-start;background:#2b3443}.chatrow{display:flex;gap:9px;margin-top:12px}.chatrow input{flex:1;background:var(--asfalto2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px}.notice{background:rgba(255,201,60,.08);border:1px solid rgba(255,201,60,.35);border-radius:12px;color:#ffe19a;padding:12px;font-size:13px}.danger{background:rgba(228,87,46,.08);border-color:rgba(228,87,46,.4);color:#f5b8a5}.ok{background:rgba(34,163,102,.08);border-color:rgba(34,163,102,.4);color:#a9e7c8}@media(max-width:860px){.split{grid-template-columns:1fr}#map{height:390px}.panel{padding:18px}}@media print{header,.panel.form,.btn,.chatrow{display:none!important}body{background:white;color:#111}.panel,.card,.stop,.checkgroup{background:white;color:#111;border-color:#ccc}.value{color:#111}#resultado{display:block!important}}
 </style>
 </head>
 <body>
-
-<div class="faixa-topo"></div>
-
-<header class="hero">
-  <div class="eyebrow">Planejamento de viagem em família</div>
+<div class="topline"></div>
+<header>
+  <div class="eyebrow">Planejamento real de rota, combustível, pedágio e família</div>
   <h1>Rota <span>Certa</span></h1>
-  <p>Coloque destino, carro e quantas pessoas vão. O sistema monta o roteiro: paradas de descanso, custo de combustível, previsão do tempo no destino e um checklist de segurança — tudo pensado para chegar tranquilo.</p>
+  <p>Busca por cidade, endereço ou atração turística — até com erro de digitação. Ex.: <strong>Beto Carreiro</strong>, <strong>Hopi Hari</strong>, <strong>hpy rari</strong>. O cálculo usa backend seguro para APIs e não expõe chaves no navegador.</p>
 </header>
-
-<main>
-
-  <!-- ============ FORMULÁRIO ============ -->
-  <section class="painel">
+<main class="wrap">
+  <section class="panel form">
     <h2><span class="num">1</span> Dados da viagem</h2>
-    <p class="sub">Preencha o essencial. Os campos avançados são opcionais.</p>
-
-    <div class="modo-toggle">
-      <button type="button" id="btn-modo-carro" class="ativo" onclick="definirModo('carro')">🚗 De carro</button>
-      <button type="button" id="btn-modo-aviao" onclick="definirModo('aviao')">✈️ De avião</button>
-    </div>
-
+    <p class="sub">Para ficar preciso, preencha origem, destino, carro e data. O backend consulta rota, ANP, clima e pedágio quando a API estiver configurada.</p>
     <div class="grid">
-      <div class="campo">
-        <label for="origem">Saindo de</label>
-        <input id="origem" type="text" placeholder="Ex: São Paulo, SP">
-      </div>
-      <div class="campo">
-        <label for="destino">Destino</label>
-        <input id="destino" type="text" placeholder="Ex: Beto Carrero World ou Penha, SC">
-        <small>Pode digitar atração ou cidade. Ex: "Beto Carrero", "Beto Carreiro", "Penha, SC", "Balneário Camboriú".</small>
-      </div>
-      <div class="campo">
-        <label for="data-partida">Data e hora de partida</label>
-        <input id="data-partida" type="datetime-local">
-      </div>
-      <div class="campo">
-        <label for="pessoas">Quantas pessoas</label>
-        <input id="pessoas" type="number" min="1" value="4">
-      </div>
+      <div class="field"><label>Saindo de</label><input id="origem" placeholder="Ex: São Paulo, SP" value="São Paulo, SP"></div>
+      <div class="field"><label>Destino</label><input id="destino" placeholder="Ex: Hopi Hari, Beto Carreiro, Penha SC"></div>
+      <div class="field"><label>Data e hora de partida</label><input id="partida" type="datetime-local"></div>
+      <div class="field"><label>Pessoas</label><input id="pessoas" type="number" min="1" value="4"></div>
     </div>
-
-    <div class="grid" style="margin-top:16px;">
-      <div class="campo">
-        <div class="linha-check"><input type="checkbox" id="tem-criancas"><label for="tem-criancas">Vai com crianças pequenas</label></div>
-        <div class="linha-check"><input type="checkbox" id="tem-pets"><label for="tem-pets">Vai com pet</label></div>
-      </div>
+    <div class="grid" style="margin-top:14px">
+      <div class="field"><label>Modelo do carro</label><select id="carro"></select></div>
+      <div class="field"><label>Combustível</label><select id="combustivel"><option value="gasolina">Gasolina comum</option><option value="gasolina_aditivada">Gasolina aditivada</option><option value="etanol">Etanol</option><option value="diesel">Diesel</option><option value="diesel_s10">Diesel S10</option></select></div>
+      <div class="field"><label>Consumo estrada (km/l)</label><input id="consumo" type="number" step="0.1" value="12"></div>
+      <div class="field"><label>Tanque (litros)</label><input id="tanque" type="number" step="1" value="50"></div>
     </div>
-
-    <!-- ---- campos específicos: carro ---- -->
-    <div id="campos-carro" style="margin-top:20px;">
-      <div class="grid">
-        <div class="campo">
-          <label for="modelo-carro">Modelo do carro</label>
-          <select id="modelo-carro" onchange="preencherConsumo()"></select>
-        </div>
-        <div class="campo">
-          <label for="consumo">Consumo (km/l)</label>
-          <input id="consumo" type="number" step="0.1" value="12">
-        </div>
-        <div class="campo">
-          <label for="tanque">Tanque (litros)</label>
-          <input id="tanque" type="number" value="50">
-        </div>
-        <div class="campo">
-          <label for="preco-combustivel">Preço do combustível (R$/L)</label>
-          <input id="preco-combustivel" type="number" step="0.01" value="5.89">
-          <small>Atualize pelo preço real do posto antes de sair.</small>
-        </div>
-        <div class="campo">
-          <label for="tipo-combustivel">Tipo de combustível</label>
-          <select id="tipo-combustivel">
-            <option value="gasolina">Gasolina</option>
-            <option value="etanol">Etanol</option>
-            <option value="diesel">Diesel</option>
-            <option value="flex">Flex / misto</option>
-          </select>
-        </div>
-        <div class="campo">
-          <label for="margem-combustivel">Margem de segurança (%)</label>
-          <input id="margem-combustivel" type="number" value="10" min="0" max="50">
-          <small>Use 10% a 20% para trânsito, ar-condicionado, serra e desvios.</small>
-        </div>
-      </div>
+    <div class="grid" style="margin-top:14px">
+      <div class="field"><label>Margem de segurança do combustível (%)</label><input id="margem" type="number" min="0" max="50" value="8"><span class="hint">Compensa trânsito, subida, ar-condicionado e desvio.</span></div>
+      <div class="field"><label>Parar a cada (horas)</label><input id="intervalo" type="number" step="0.5" value="2"></div>
+      <div class="field"><label>Duração da parada (min)</label><input id="minparada" type="number" value="20"></div>
+      <div class="field"><label>Veículo para pedágio</label><select id="veiculoPedagio"><option value="2AxlesAuto">Carro / SUV 2 eixos</option><option value="Motorcycle">Moto</option><option value="2AxlesTruck">Utilitário / caminhão 2 eixos</option></select></div>
     </div>
-
-    <!-- ---- campos específicos: avião ---- -->
-    <div id="campos-aviao" style="display:none;margin-top:20px;">
-      <div class="grid">
-        <div class="campo">
-          <label for="voo-numero">Número do voo</label>
-          <input id="voo-numero" type="text" placeholder="Ex: G3 1234">
-        </div>
-        <div class="campo">
-          <label for="voo-horario">Horário de embarque</label>
-          <input id="voo-horario" type="datetime-local">
-        </div>
-        <div class="campo">
-          <label for="voo-tipo">Voo</label>
-          <select id="voo-tipo">
-            <option value="nacional">Nacional</option>
-            <option value="internacional">Internacional</option>
-          </select>
-        </div>
-      </div>
+    <div class="checks" style="margin-top:16px">
+      <label><input id="criancas" type="checkbox"> Vai com crianças</label>
+      <label><input id="pets" type="checkbox"> Vai com pet</label>
+      <label><input id="idavolta" type="checkbox"> Calcular ida e volta</label>
+      <label><input id="evitarPedagios" type="checkbox"> Evitar pedágios</label>
     </div>
-
-    <details class="avancado">
-      <summary>Configurações avançadas (opcional — melhora a precisão)</summary>
-      <div class="grid">
-        <div class="campo">
-          <label for="chave-google">Chave da Google Maps API</label>
-          <input id="chave-google" type="text" placeholder="Cole sua chave (Directions API)">
-          <small>Sem chave, a distância é estimada em linha reta com fator de curva. Com a chave, o roteiro usa a rota rodoviária real, com pedágios detectados quando disponíveis e alternativas de rota.</small>
-        </div>
-        <div class="campo">
-          <label for="proxy-ia">URL do proxy de IA (Cloudflare Worker)</label>
-          <input id="proxy-ia" type="text" value="https://rota-certa.prafael.com.br" placeholder="https://rota-certa.prafael.com.br">
-          <small>Deploy o worker.js (arquivo separado) na Cloudflare e cole a URL aqui para o assistente usar a OpenAI com sua chave protegida no servidor. Sem isso, o assistente usa a IA da Anthropic embutida.</small>
-        </div>
-        <div class="campo">
-          <label for="minutos-parada">Duração de cada parada (min)</label>
-          <input id="minutos-parada" type="number" value="20">
-        </div>
-        <div class="campo">
-          <label for="intervalo-parada">Parar a cada (horas de estrada)</label>
-          <input id="intervalo-parada" type="number" step="0.5" value="2">
-          <small>A ABDET/CONTRAN recomenda uma pausa a cada 2h de direção para evitar fadiga ao volante.</small>
-        </div>
+    <details>
+      <summary>Configuração técnica</summary>
+      <div class="grid" style="margin-top:14px">
+        <div class="field"><label>URL do backend/proxy</label><input id="apiBase" value="https://rota-certa.prafael.com.br"><span class="hint">No teste local: http://localhost:3000</span></div>
       </div>
-      <div class="aviso">A chave do Google Maps fica apenas na memória desta página. O assistente de IA (passo 7) usa o proxy da OpenAI se você configurar a URL do Worker, ou a Anthropic embutida automaticamente caso contrário — nenhuma chave de IA fica exposta no navegador.</div>
+      <div class="notice" style="margin-top:12px">Para pedágio detalhado por praça, configure <strong>TOLLGURU_API_KEY</strong>. Para busca/rota premium, configure <strong>GOOGLE_MAPS_API_KEY</strong>. Sem elas, o app usa OpenStreetMap/OSRM e avisa quando o pedágio não puder ser calculado.</div>
     </details>
-
-    <button class="btn-principal" id="btn-planejar" onclick="planejarViagem()">Gerar roteiro da viagem</button>
+    <button class="btn btn-main" id="btnPlan" onclick="planejar()">Gerar roteiro perfeito</button>
+    <div class="status" id="status"></div>
   </section>
 
-  <!-- ============ RESULTADO ============ -->
   <section id="resultado">
+    <section class="panel"><h2><span class="num">2</span> Resumo financeiro e rota</h2><div class="cards" id="cards"></div></section>
 
-    <section class="painel">
-      <h2><span class="num">2</span> Resumo da viagem</h2>
-      <div class="resumo-grid" id="resumo-grid"></div>
+    <section class="panel">
+      <h2><span class="num">3</span> Mapa interativo</h2>
+      <p class="sub">Rota real, origem, destino e paradas sugeridas. Clique nas paradas para abrir no Google Maps.</p>
+      <div id="map"></div>
     </section>
 
-    <section class="painel">
-      <h2><span class="num">3</span> Previsão do tempo no destino</h2>
-      <div id="clima-area" class="resumo-card clima-card">Consultando previsão…</div>
-    </section>
-
-    <section class="painel">
-      <h2><span class="num">4</span> Roteiro interativo</h2>
-      <p class="sub">Partida, paradas sugeridas e chegada, na ordem da estrada.</p>
-      <div class="estrada" id="estrada"></div>
-    </section>
-
-    <section class="painel" id="painel-pedagios">
-      <h2><span class="num">5</span> Pedágios da rota</h2>
-      <p class="sub">O cálculo automático de praças de pedágio depende de uma API paga (ex: Rotas Brasil, Qualp ou TollGuru — veja o comentário no código-fonte para plugar sua chave). Por enquanto, adicione manualmente os valores que encontrar no <a href="https://qualp.com.br" target="_blank" rel="noopener">Qualp</a> ou <a href="https://www.brasilpedagios.com" target="_blank" rel="noopener">Brasil Pedágios</a> e o total é somado automaticamente.</p>
-      <table class="pedagios" id="tabela-pedagios">
-        <thead><tr><th>Praça de pedágio</th><th>KM aprox.</th><th>Valor (R$)</th><th></th></tr></thead>
-        <tbody id="corpo-pedagios"></tbody>
-      </table>
-      <button class="btn-sec" onclick="adicionarPedagio()">+ Adicionar pedágio</button>
-      <div class="total-pedagio">Total de pedágios: <strong id="total-pedagio-valor" class="mono">R$ 0,00</strong></div>
-    </section>
-
-    <section class="painel">
-      <h2><span class="num">6</span> Checklist da família</h2>
-      <div class="checklist" id="checklist"></div>
-    </section>
-
-    <section class="painel">
-      <h2><span class="num">7</span> Assistente de sugestões (IA)</h2>
-      <p class="sub">Peça dicas de paradas, atividades para as crianças, o que levar, restaurantes na região etc. Usa a OpenAI via seu proxy (se configurado) ou a IA embutida automaticamente.</p>
-      <div class="chat-box" id="chat-box"></div>
-      <div class="chat-input">
-        <input type="text" id="chat-pergunta" placeholder="Ex: sugestões de paradas com playground no caminho">
-        <button class="btn-sec" onclick="perguntarIA()">Perguntar</button>
+    <section class="panel">
+      <h2><span class="num">4</span> Roteiro e paradas</h2>
+      <div class="split">
+        <div class="route-list" id="routeList"></div>
+        <div>
+          <div class="notice ok" id="fuelSource"></div>
+          <div class="notice" id="apiSource" style="margin-top:12px"></div>
+          <div class="notice danger" id="tollNotice" style="margin-top:12px;display:none"></div>
+        </div>
       </div>
     </section>
 
-    <div style="display:flex;gap:10px;">
-      <button class="btn-sec" onclick="window.print()">🖨️ Imprimir / salvar roteiro em PDF</button>
-    </div>
+    <section class="panel">
+      <h2><span class="num">5</span> Pedágios</h2>
+      <div id="tollsArea"></div>
+    </section>
 
+    <section class="panel">
+      <h2><span class="num">6</span> Checklist completo</h2>
+      <div class="checkgrid" id="checklist"></div>
+    </section>
+
+    <section class="panel">
+      <h2><span class="num">7</span> Assistente de viagem</h2>
+      <p class="sub">Usa seu proxy OpenAI. Pergunte por paradas, alimentação, horários, roteiro no parque ou plano B de chuva.</p>
+      <div class="chatbox" id="chat"></div>
+      <div class="chatrow"><input id="pergunta" placeholder="Ex: Monte um plano de paradas com criança e horário de almoço"><button class="btn btn-sec" onclick="perguntarIA()">Perguntar</button></div>
+    </section>
+
+    <button class="btn btn-sec" onclick="window.print()">🖨️ Imprimir / salvar PDF</button>
   </section>
-
 </main>
-
-<footer>Rota Certa v2 — feito para viagens de família tranquilas e seguras. Destinos especiais corrigidos: Beto Carrero/Beto Carreiro/Penha. Distâncias sem chave de mapa são estimativas.</footer>
-
 <script>
-/* =========================================================================
-   BASE DE CARROS — consumo médio estrada (km/l gasolina) e tanque (L).
-   Ajuste livremente ou plugue uma API de fichas técnicas se quiser mais precisão.
-   ========================================================================= */
-const DESTINOS_ESPECIAIS = {
-  // Corrige nomes digitados pelo usuário e atrações que o Open-Meteo não acha bem
-  'beto carrero': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
-  'beto carreiro': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
-  'beto carrero world': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
-  'beto carreiro world': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
-  'parque beto carrero': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
-  'penha': {lat:-26.7754, lon:-48.6465, nome:'Penha, Santa Catarina'},
-  'penha sc': {lat:-26.7754, lon:-48.6465, nome:'Penha, Santa Catarina'}
-};
-
-const BASE_CARROS = {
-  "Fiat Mobi":            {consumo:15.5, tanque:47},
-  "Fiat Argo":             {consumo:13.8, tanque:48},
-  "Fiat Pulse":            {consumo:13.0, tanque:47},
-  "Fiat Strada":           {consumo:13.5, tanque:53},
-  "Chevrolet Onix":        {consumo:15.8, tanque:44},
-  "Chevrolet Tracker":     {consumo:13.2, tanque:44},
-  "Volkswagen Gol":        {consumo:14.0, tanque:55},
-  "Volkswagen Polo":       {consumo:14.5, tanque:50},
-  "Volkswagen T-Cross":    {consumo:12.8, tanque:52},
-  "Hyundai HB20":          {consumo:14.6, tanque:50},
-  "Hyundai Creta":         {consumo:12.5, tanque:50},
-  "Toyota Corolla":        {consumo:13.9, tanque:50},
-  "Toyota Yaris":          {consumo:14.8, tanque:42},
-  "Toyota Corolla Cross":  {consumo:13.0, tanque:47},
-  "Honda Civic":           {consumo:13.6, tanque:47},
-  "Honda HR-V":            {consumo:12.9, tanque:50},
-  "Jeep Renegade":         {consumo:12.0, tanque:60},
-  "Jeep Compass":          {consumo:11.5, tanque:60},
-  "Renault Kwid":          {consumo:16.5, tanque:37},
-  "Nissan Kicks":          {consumo:13.0, tanque:41},
-  "Outro / não listado":   {consumo:12.0, tanque:50}
-};
-
-const el = id => document.getElementById(id);
-
-/* -------- popular select de carros -------- */
-(function initSelectCarros(){
-  const sel = el('modelo-carro');
-  Object.keys(BASE_CARROS).forEach(nome=>{
-    const opt = document.createElement('option');
-    opt.value = nome; opt.textContent = nome;
-    sel.appendChild(opt);
-  });
+const CARROS={"Fiat Mobi":{c:15.5,t:47},"Fiat Argo":{c:13.8,t:48},"Chevrolet Onix":{c:15.8,t:44},"Hyundai HB20":{c:14.6,t:50},"Volkswagen Polo":{c:14.5,t:50},"Toyota Corolla":{c:13.9,t:50},"Honda HR-V":{c:12.9,t:50},"Jeep Renegade":{c:12,t:60},"Jeep Compass":{c:11.5,t:60},"Nissan Kicks":{c:13,t:41},"Outro / manual":{c:12,t:50}};
+const CLIMA={0:['☀️','Céu limpo'],1:['🌤️','Poucas nuvens'],2:['⛅','Parcialmente nublado'],3:['☁️','Nublado'],45:['🌫️','Neblina'],48:['🌫️','Neblina/geada'],51:['🌦️','Garoa leve'],53:['🌦️','Garoa moderada'],55:['🌧️','Garoa intensa'],61:['🌧️','Chuva leve'],63:['🌧️','Chuva moderada'],65:['🌧️','Chuva forte'],80:['🌦️','Pancadas leves'],81:['🌧️','Pancadas moderadas'],82:['🌧️','Pancadas fortes'],95:['⛈️','Trovoadas']};
+let lastPlan=null,map=null,routeLayer=null,markerLayer=null;
+const $=id=>document.getElementById(id);
+(function init(){
+  const sel=$('carro'); Object.keys(CARROS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o)}); sel.onchange=()=>{const d=CARROS[sel.value];$('consumo').value=d.c;$('tanque').value=d.t}; sel.value='Outro / manual';
+  const now=new Date(); now.setHours(now.getHours()+1); $('partida').value=toLocalInput(now);
+  $('pergunta').addEventListener('keydown',e=>{if(e.key==='Enter')perguntarIA()});
 })();
-function preencherConsumo(){
-  const dados = BASE_CARROS[el('modelo-carro').value];
-  if(!dados) return;
-  el('consumo').value = dados.consumo;
-  el('tanque').value = dados.tanque;
-}
-preencherConsumo();
-
-/* -------- alternância carro / avião -------- */
-let modoAtual = 'carro';
-function definirModo(m){
-  modoAtual = m;
-  el('btn-modo-carro').classList.toggle('ativo', m==='carro');
-  el('btn-modo-aviao').classList.toggle('ativo', m==='aviao');
-  el('campos-carro').style.display = m==='carro' ? '' : 'none';
-  el('campos-aviao').style.display = m==='aviao' ? '' : 'none';
-  el('painel-pedagios').style.display = m==='carro' ? '' : 'none';
-}
-
-/* -------- checklist dinâmico -------- */
-function montarChecklist(){
-  const criancas = el('tem-criancas').checked;
-  const pets = el('tem-pets').checked;
-  const itens = [
-    "Documentos (RG/CNH/CRLV)","Cartão do convênio / documentos de saúde","Carregador de celular / power bank","Suporte veicular e cabo USB",
-    "Água e lanches para a estrada","Sacos de lixo e lenços umedecidos","Kit de primeiros socorros","Remédios de uso contínuo",
-    "Estepe, macaco e chave de roda calibrados","Pneus, óleo, água e limpador revisados antes de sair",
-    "Dinheiro/tag para pedágio","Seguro do veículo e assistência 24h","Roteiro salvo offline / print da rota",
-    "Reservas, ingressos e comprovantes salvos no celular"
-  ];
-  if(modoAtual==='carro'){
-    itens.push("Triângulo e colete refletivo","Calibrar pneus com carro cheio","Encher o tanque antes de pegar estrada","Paradas principais marcadas no mapa");
-  } else {
-    itens.push("Check-in online feito","Bagagem dentro do limite de peso");
-  }
-  if(criancas) itens.push("Cadeirinha/bebê conforto instalada","Troca de roupa fácil na mala de mão","Brinquedos e atividades para o trajeto","Fone/tablet carregado","Remédios infantis de uso comum","Paradas com banheiro limpo/playground quando possível");
-  if(pets) itens.push("Caixa de transporte / cinto para pet","Água, ração e coleira extra para o pet","Carteira de vacinação do pet","Tapete higiênico/sacos coletores");
-
-  const cont = el('checklist');
-  cont.innerHTML = '';
-  itens.forEach((texto,i)=>{
-    const id = 'chk-'+i;
-    const div = document.createElement('label');
-    div.className = 'item-check';
-    div.htmlFor = id;
-    div.innerHTML = `<input type="checkbox" id="${id}"><span>${texto}</span>`;
-    div.querySelector('input').addEventListener('change', e=>{
-      div.classList.toggle('feito', e.target.checked);
-    });
-    cont.appendChild(div);
-  });
-}
-
-/* -------- pedágios (linhas manuais) -------- */
-function adicionarPedagio(nome='', km='', valor=''){
-  const tbody = el('corpo-pedagios');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input type="text" value="${nome}" placeholder="Ex: Praça Km 45 - Via Dutra"></td>
-    <td><input type="number" value="${km}" style="width:80px"></td>
-    <td><input type="number" step="0.01" value="${valor}" style="width:90px" onchange="somarPedagios()"></td>
-    <td class="rm"><button onclick="this.closest('tr').remove(); somarPedagios();">✕</button></td>`;
-  tbody.appendChild(tr);
-  somarPedagios();
-}
-function somarPedagios(){
-  let total = 0;
-  document.querySelectorAll('#corpo-pedagios tr').forEach(tr=>{
-    const v = parseFloat(tr.children[2].querySelector('input').value)||0;
-    total += v;
-  });
-  el('total-pedagio-valor').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
-  return total;
-}
-
-/* -------- geocodificação e clima via Open-Meteo (gratuito, sem chave) -------- */
-async function geocodificar(nomeCidade){
-  const original = nomeCidade.trim();
-  let nomeLimpo = normalizarBusca(original);
-
-  // 1) Destinos/atrações conhecidos: resolve “Beto Carreiro” e variações.
-  if (DESTINOS_ESPECIAIS[nomeLimpo]) return DESTINOS_ESPECIAIS[nomeLimpo];
-  for (const chave of Object.keys(DESTINOS_ESPECIAIS)) {
-    if (nomeLimpo.includes(chave)) return DESTINOS_ESPECIAIS[chave];
-  }
-
-  // 2) Open-Meteo: bom para cidades.
-  let tentativas = [original];
-  if (original.includes(',') || original.includes('-')) tentativas.push(original.split(/[,|-]/)[0].trim());
-  if (nomeLimpo.endsWith(' sc')) tentativas.push(original.replace(/\s+sc$/i,'').trim());
-  if (nomeLimpo.endsWith(' sp')) tentativas.push(original.replace(/\s+sp$/i,'').trim());
-
-  for (const termo of [...new Set(tentativas.filter(Boolean))]) {
-    const res = await buscarOpenMeteo(termo);
-    if (res) return res;
-  }
-
-  // 3) Nominatim/OpenStreetMap: melhor para pontos turísticos e nomes comerciais.
-  const osm = await buscarNominatim(original);
-  if (osm) return osm;
-
-  throw new Error(`"${nomeCidade}" não encontrado. Tente: "Beto Carrero World", "Penha, SC" ou cidade + UF.`);
-}
-
-function normalizarBusca(txt){
-  return String(txt||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
-}
-
-async function buscarNominatim(nome) {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(nome)}`;
-    const r = await fetch(url, {headers:{'Accept':'application/json'}});
-    const j = await r.json();
-    if(!Array.isArray(j) || !j.length) return null;
-    const res = j[0];
-    return {lat:parseFloat(res.lat), lon:parseFloat(res.lon), nome:res.display_name.split(',').slice(0,4).join(',')};
-  } catch(e) { return null; }
-}
-
-async function buscarOpenMeteo(nome) {
-  try {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(nome)}&count=1&language=pt&format=json`;
-    const r = await fetch(url);
-    const j = await r.json();
-    if(!j.results || !j.results.length) return null;
-    const res = j.results[0];
-    return {lat:res.latitude, lon:res.longitude, nome:`${res.name}${res.admin1? ', '+res.admin1:''}`};
-  } catch(e) {
-    return null;
-  }
-}
-
-function haversineKm(lat1,lon1,lat2,lon2){
-  const R=6371, toRad=d=>d*Math.PI/180;
-  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-const CODIGOS_CLIMA = {
-  0:['☀️','Céu limpo'],1:['🌤️','Poucas nuvens'],2:['⛅','Parcialmente nublado'],3:['☁️','Nublado'],
-  45:['🌫️','Neblina'],48:['🌫️','Neblina com geada'],
-  51:['🌦️','Garoa leve'],53:['🌦️','Garoa moderada'],55:['🌧️','Garoa intensa'],57:['🌧️','Garoa gelada'],
-  61:['🌧️','Chuva leve'],63:['🌧️','Chuva moderada'],65:['🌧️','Chuva forte'],67:['🌧️','Chuva gelada'],
-  71:['🌨️','Neve leve'],73:['🌨️','Neve moderada'],75:['🌨️','Neve intensa'],77:['🌨️','Granizo fino'],
-  80:['🌦️','Pancadas leves'],81:['🌧️','Pancadas moderadas'],82:['🌧️','Pancadas fortes'],
-  85:['🌨️','Pancadas de neve leve'],86:['🌨️','Pancadas de neve forte'],
-  95:['⛈️','Trovoadas'],96:['⛈️','Trovoadas c/ granizo'],99:['⛈️','Trovoadas c/ granizo forte']
-};
-
-async function buscarClima(lat,lon,dataISO){
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
-  const r = await fetch(url);
-  const j = await r.json();
-  const dia = (dataISO||'').slice(0,10);
-  let idx = j.daily.time.indexOf(dia);
-  if(idx === -1) idx = 0; // fora do alcance da previsão (>16 dias): mostra o dia mais próximo disponível
-  return {
-    dataUsada: j.daily.time[idx],
-    codigo: j.daily.weathercode[idx],
-    max: j.daily.temperature_2m_max[idx],
-    min: j.daily.temperature_2m_min[idx],
-    chuva: j.daily.precipitation_probability_max[idx],
-    foraDoAlcance: j.daily.time.indexOf(dia) === -1
-  };
-}
-
-/* -------- planejamento principal -------- */
-async function planejarViagem(){
-  const btn = el('btn-planejar');
-  btn.disabled = true; btn.textContent = 'Buscando localizações…';
+function toLocalInput(d){const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`}
+function api(){return $('apiBase').value.replace(/\/$/,'')}
+function money(v,c='BRL'){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:c}).format(Number(v||0))}
+function km(v){return `${Number(v||0).toFixed(0)} km`}
+function horas(h){h=Number(h||0); const a=Math.floor(h),m=Math.round((h-a)*60); return `${a}h${String(m).padStart(2,'0')}`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function planejar(){
+  const btn=$('btnPlan'); btn.disabled=true; $('status').textContent='Consultando backend, rota, combustível ANP, clima e pedágio...';
   try{
-    const origemTxt = el('origem').value.trim();
-    const destinoTxt = el('destino').value.trim();
-    if(!origemTxt || !destinoTxt){ alert('Preencha origem e destino.'); return; }
-    const partidaISO = el('data-partida').value;
-    if(!partidaISO){ alert('Preencha a data e hora de partida.'); return; }
-    const pessoas = parseInt(el('pessoas').value)||1;
-
-    const origem = await geocodificar(origemTxt);
-    const destino = await geocodificar(destinoTxt);
-    btn.textContent = 'Calculando rota…';
-
-    let distanciaKm, duracaoHoras, fonteRota = 'estimativa em linha reta (sem chave de mapa)';
-    const chaveGoogle = el('chave-google').value.trim();
-
-    if(chaveGoogle){
-      try{
-        const rota = await calcularRotaGoogle(origem, destino, chaveGoogle);
-        distanciaKm = rota.distanciaKm; duracaoHoras = rota.duracaoHoras;
-        fonteRota = 'rota rodoviária real (Google Maps)';
-      }catch(e){
-        console.warn('Falha na Google Directions API, usando estimativa.', e);
-        const reta = haversineKm(origem.lat,origem.lon,destino.lat,destino.lon);
-        distanciaKm = reta*1.25; duracaoHoras = distanciaKm/85;
-      }
-    } else {
-      const reta = haversineKm(origem.lat,origem.lon,destino.lat,destino.lon);
-      distanciaKm = reta*1.25; // fator médio de curvas de estrada
-      duracaoHoras = distanciaKm/85; // velocidade média de viagem assumida
-    }
-
-    montarChecklist();
-
-    if(modoAtual === 'carro'){
-      renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO,fonteRota,pessoas});
-    } else {
-      renderizarModoAviao({origem,destino,partidaISO,pessoas});
-    }
-
-    btn.textContent = 'Buscando previsão do tempo…';
-    // clima do destino (independente do modo)
-    const dataChegadaAprox = modoAtual==='carro'
-      ? new Date(new Date(partidaISO||Date.now()).getTime() + duracaoHoras*3600000).toISOString()
-      : (el('voo-horario').value || partidaISO || new Date().toISOString());
-    const clima = await buscarClima(destino.lat, destino.lon, dataChegadaAprox);
-    renderClima(clima, destino.nome);
-
-    el('resultado').style.display = 'block';
-    el('resultado').scrollIntoView({behavior:'smooth'});
-  }catch(err){
-    console.error(err);
-    alert('Não foi possível gerar o roteiro: ' + err.message);
-  }finally{
-    btn.disabled = false; btn.textContent = 'Gerar roteiro da viagem';
-  }
+    const body={origem:$('origem').value,destino:$('destino').value,partidaISO:$('partida').value,pessoas:+$('pessoas').value,criancas:$('criancas').checked,pets:$('pets').checked,consumoKmL:+$('consumo').value,tanqueLitros:+$('tanque').value,combustivel:$('combustivel').value,margemSegurancaPct:+$('margem').value,intervaloParadaHoras:+$('intervalo').value,minutosParada:+$('minparada').value,idaVolta:$('idavolta').checked,evitarPedagios:$('evitarPedagios').checked,veiculoPedagio:$('veiculoPedagio').value};
+    const r=await fetch(api()+'/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await r.json().catch(()=>({})); if(!r.ok) throw new Error(data.error||'Erro HTTP '+r.status);
+    lastPlan=data; render(data); $('resultado').style.display='block'; $('resultado').scrollIntoView({behavior:'smooth'}); $('status').textContent='Roteiro gerado com sucesso.';
+  }catch(e){console.error(e); $('status').textContent='Erro: '+e.message; alert('Não consegui gerar o roteiro: '+e.message)}
+  finally{btn.disabled=false}
 }
-
-/* -------- integração opcional Google Maps Directions -------- */
-function calcularRotaGoogle(origem, destino, chave){
-  return new Promise((resolve,reject)=>{
-    if(window.google && window.google.maps){ return usarDirectionsService(); }
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${chave}&libraries=places&callback=__googleMapsPronto`;
-    window.__googleMapsPronto = usarDirectionsService;
-    script.onerror = ()=>reject(new Error('Não foi possível carregar a Google Maps API (verifique a chave).'));
-    document.head.appendChild(script);
-
-    function usarDirectionsService(){
-      const svc = new google.maps.DirectionsService();
-      svc.route({
-        origin: {lat:origem.lat, lng:origem.lon},
-        destination: {lat:destino.lat, lng:destino.lon},
-        travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true
-      }, (res, status)=>{
-        if(status !== 'OK'){ reject(new Error('Directions API: '+status)); return; }
-        const leg = res.routes[0].legs[0];
-        resolve({
-          distanciaKm: leg.distance.value/1000,
-          duracaoHoras: leg.duration.value/3600,
-          alternativas: res.routes.length
-        });
-      });
-    }
-  });
+function render(d){renderCards(d); renderMap(d); renderRouteList(d); renderTolls(d); renderChecklist(d); renderSources(d)}
+function renderCards(d){
+  const clima=d.clima; const [ic,desc]=clima?(CLIMA[clima.code]||['❔','Sem dados']):['❔','Sem clima']; const total=d.fuel.custoTotal+(d.tolls.total||0)*(d.input.idaVolta?2:1);
+  $('cards').innerHTML=[
+    card('Distância',km(d.route.distanceKm),d.route.source),
+    card('Tempo na estrada',horas(d.route.durationHours),'sem contar paradas'),
+    card('Combustível',money(d.fuel.custoTotal),`${d.fuel.litrosIda} L ida${d.input.idaVolta?' · ida e volta':''}`),
+    card('Preço médio litro',money(d.fuel.precoMedioLitro),d.fuel.source),
+    card('Pedágio',d.tolls.status==='sem_api'?'Configurar API':money((d.tolls.total||0)*(d.input.idaVolta?2:1),d.tolls.currency||'BRL'),d.tolls.source),
+    card('Total estimado',money(total),'combustível + pedágio','good'),
+    card('Por pessoa',money(total/d.input.pessoas),`${d.input.pessoas} pessoas`),
+    card('Clima destino',`${ic} ${desc}`,clima?`${Math.round(clima.tempMin)}° a ${Math.round(clima.tempMax)}° · chuva ${clima.rainPct}%`:'')
+  ].join('')
 }
-/* Para pedágios automáticos, plugue aqui uma API como Rotas Brasil (rotasbrasil.com.br),
-   Qualp (qualp.com.br) ou TollGuru — todas exigem token pago. Ex de uso (pseudo-código):
-   const r = await fetch(`https://rotasbrasil.com.br/apiRotas/coordenadas/?pontos=${lonLat1};${lonLat2}&veiculo=auto&token=SEU_TOKEN`);
-   e então popule a tabela #corpo-pedagios com adicionarPedagio(nome, km, valor) para cada praça. */
-
-/* -------- render: resumo + roteiro (modo carro) -------- */
-function renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO,fonteRota,pessoas}){
-  const consumo = parseFloat(el('consumo').value)||12;
-  const tanque = parseFloat(el('tanque').value)||50;
-  const precoLitro = parseFloat(el('preco-combustivel').value)||0;
-  const margemPct = Math.max(0, parseFloat(el('margem-combustivel').value)||0);
-  const tipoCombustivel = el('tipo-combustivel').value;
-  const minutosParada = parseFloat(el('minutos-parada').value)||20;
-  const intervaloHoras = parseFloat(el('intervalo-parada').value)||2;
-
-  const litrosBase = distanciaKm/consumo;
-  const litrosNecessarios = litrosBase*(1+margemPct/100);
-  const custoCombustivel = litrosNecessarios*precoLitro;
-  const custoPorPessoa = pessoas ? custoCombustivel/pessoas : custoCombustivel;
-  const custoIdaVolta = custoCombustivel*2;
-  const autonomiaTanque = tanque*consumo;
-  const reabastecimentos = Math.max(0, Math.ceil(distanciaKm/autonomiaTanque) - 1);
-
-  const numParadas = Math.max(0, Math.floor(duracaoHoras/intervaloHoras));
-  const tempoTotalParadasHoras = numParadas*minutosParada/60;
-  const duracaoTotalHoras = duracaoHoras + tempoTotalParadasHoras;
-
-  const partida = partidaISO ? new Date(partidaISO) : new Date();
-  const chegada = new Date(partida.getTime() + duracaoTotalHoras*3600000);
-
-  // resumo
-  el('resumo-grid').innerHTML = `
-    ${cardResumo('Distância', distanciaKm.toFixed(0)+' km', fonteRota)}
-    ${cardResumo('Tempo de estrada', formatarHoras(duracaoHoras), 'sem contar paradas')}
-    ${cardResumo('Chegada prevista', formatarDataHora(chegada), formatarHoras(duracaoTotalHoras)+' com paradas', 'verde')}
-    ${cardResumo('Combustível ida', 'R$ '+custoCombustivel.toFixed(2).replace('.',','), litrosNecessarios.toFixed(1)+' L · '+tipoCombustivel+' · margem '+margemPct+'%')}
-    ${cardResumo('Combustível por pessoa', 'R$ '+custoPorPessoa.toFixed(2).replace('.',','), 'ida · estimado')}
-    ${cardResumo('Ida e volta combustível', 'R$ '+custoIdaVolta.toFixed(2).replace('.',','), 'sem pedágios')}
-    ${cardResumo('Reabastecimentos', reabastecimentos+'x no caminho', 'autonomia ~'+autonomiaTanque.toFixed(0)+' km · saindo com tanque cheio')}
-    ${cardResumo('Pessoas a bordo', pessoas, modoAtual)}
-  `;
-
-  // roteiro / estrada
-  const estrada = el('estrada');
-  estrada.innerHTML = '';
-  estrada.appendChild(criarParada({
-    tipo:'partida', km:0, titulo:'Partida — '+origem.nome,
-    horario: formatarDataHora(partida),
-    desc: 'Saída da viagem. Confira o checklist antes de sair.',
-    tags:['início']
-  }));
-
-  let horaCursor = new Date(partida);
-  for(let i=1;i<=numParadas;i++){
-    const kmParada = Math.round((distanciaKm/(numParadas+1))*i);
-    horaCursor = new Date(partida.getTime() + (intervaloHoras*i)*3600000 + (minutosParada*(i-1))*60000);
-    estrada.appendChild(criarParada({
-      tipo:'parada', km:kmParada, titulo:'Parada de descanso '+i,
-      horario: formatarDataHora(horaCursor)+ ' · '+minutosParada+' min',
-      desc: 'Pare em local movimentado e bem avaliado. Estique as pernas, vá ao banheiro, hidrate a família e confira combustível. Priorize posto/restaurante com banheiro limpo, iluminação, fraldário/playground se houver crianças.',
-      tags: montarTagsParada()
-    }));
-  }
-
-  estrada.appendChild(criarParada({
-    tipo:'chegada', km:Math.round(distanciaKm), titulo:'Chegada — '+destino.nome,
-    horario: formatarDataHora(chegada),
-    desc: 'Fim do trajeto. Bem-vindos ao destino!',
-    tags:['fim']
-  }));
-
-  // limpar/preencher tabela de pedágios se ainda vazia
-  if(el('corpo-pedagios').children.length === 0){
-    adicionarPedagio('', Math.round(distanciaKm*0.3), '');
-  }
+function card(l,v,e,cls=''){return `<div class="card"><div class="label">${esc(l)}</div><div class="value ${cls}">${esc(v)}</div><div class="extra">${esc(e||'')}</div></div>`}
+function renderMap(d){
+  if(!map){map=L.map('map'); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);}
+  if(routeLayer) routeLayer.remove(); if(markerLayer) markerLayer.remove(); markerLayer=L.layerGroup().addTo(map);
+  const pts=d.route.polyline||[]; routeLayer=L.polyline(pts,{weight:6,opacity:.9}).addTo(map);
+  L.marker([d.origem.lat,d.origem.lon]).addTo(markerLayer).bindPopup(`<b>Origem</b><br>${esc(d.origem.label)}<br><small>${esc(d.origem.address||'')}</small>`);
+  L.marker([d.destino.lat,d.destino.lon]).addTo(markerLayer).bindPopup(`<b>Destino</b><br>${esc(d.destino.label)}<br><small>${esc(d.destino.address||'')}</small>`);
+  (d.stops||[]).forEach(s=>{if(s.lat&&s.lon)L.marker([s.lat,s.lon]).addTo(markerLayer).bindPopup(`<b>${esc(s.title)}</b><br>KM ${s.km}<br>${esc(s.note)}<br><a target="_blank" href="https://www.google.com/maps/search/posto+restaurante+banheiro/@${s.lat},${s.lon},14z">Buscar posto/restaurante</a>`)});
+  (d.tolls.items||[]).forEach(t=>{if(t.lat&&t.lon)L.circleMarker([t.lat,t.lon],{radius:7}).addTo(markerLayer).bindPopup(`<b>${esc(t.name)}</b><br>${money(t.cashCost,t.currency||'BRL')}`)});
+  if(pts.length){map.fitBounds(routeLayer.getBounds(),{padding:[25,25]})} else map.setView([d.destino.lat,d.destino.lon],10);
 }
-
-function montarTagsParada(){
-  const tags = ['banheiro','combustível','lanche','segurança'];
-  if(el('tem-criancas').checked) tags.push('playground');
-  if(el('tem-pets').checked) tags.push('pet-friendly');
-  return tags;
+function renderRouteList(d){
+  const partida=new Date(d.input.partidaISO); let html='';
+  html+=stopHtml('Partida',0,d.origem.label,`Saída prevista: ${partida.toLocaleString('pt-BR')}`,'Confira documentos, pneus, combustível e reservas antes de sair.',['início']);
+  (d.stops||[]).forEach(s=>html+=stopHtml(s.title,s.km,`Parar por ${s.minutes} min`,s.lat?`Coordenada: ${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`:'Ponto estimado na rota',s.note,s.tags,s));
+  const chegada=new Date(partida.getTime()+d.route.durationHours*3600000+(d.stops||[]).length*d.input.minutosParada*60000);
+  html+=stopHtml('Chegada',Math.round(d.route.distanceKm),d.destino.label,`Previsão: ${chegada.toLocaleString('pt-BR')}`,'Confirme check-in/hotel/ingressos e plano de alimentação no destino.',['fim']);
+  $('routeList').innerHTML=html;
 }
-
-/* -------- render: modo avião -------- */
-function renderizarModoAviao({origem,destino,partidaISO,pessoas}){
-  const vooNumero = el('voo-numero').value || '—';
-  const vooHorario = el('voo-horario').value ? new Date(el('voo-horario').value) : null;
-  const vooTipo = el('voo-tipo').value;
-  const antecedenciaHoras = vooTipo === 'internacional' ? 3 : 2;
-  const horarioChegadaAeroporto = vooHorario ? new Date(vooHorario.getTime() - antecedenciaHoras*3600000) : null;
-
-  el('resumo-grid').innerHTML = `
-    ${cardResumo('Voo', vooNumero, vooTipo)}
-    ${cardResumo('Embarque', vooHorario? formatarDataHora(vooHorario):'—', '')}
-    ${cardResumo('Chegar no aeroporto até', horarioChegadaAeroporto? formatarDataHora(horarioChegadaAeroporto):'—', antecedenciaHoras+'h de antecedência', 'verde')}
-    ${cardResumo('Pessoas a bordo', pessoas, 'avião')}
-  `;
-
-  const estrada = el('estrada');
-  estrada.innerHTML = '';
-  estrada.appendChild(criarParada({
-    tipo:'partida', km:'', titulo:'Saída de casa — '+origem.nome,
-    horario: horarioChegadaAeroporto? 'Saia com folga para chegar às '+formatarDataHora(horarioChegadaAeroporto): '',
-    desc:'Considere o trânsito até o aeroporto e o tempo de estacionamento/embarque.', tags:['início']
-  }));
-  estrada.appendChild(criarParada({
-    tipo:'parada', km:'', titulo:'Check-in e despacho de bagagem',
-    horario: horarioChegadaAeroporto? formatarDataHora(horarioChegadaAeroporto):'',
-    desc:'Confirme o check-in online antes, se disponível, para agilizar a fila.', tags:['aeroporto']
-  }));
-  estrada.appendChild(criarParada({
-    tipo:'chegada', km:'', titulo:'Chegada — '+destino.nome,
-    horario: vooHorario ? 'Após embarque às '+formatarDataHora(vooHorario) : 'Consulte o bilhete',
-    desc:'Fim do trajeto aéreo. Verifique o transporte do aeroporto até o destino final.', tags:['fim']
-  }));
+function stopHtml(t,kmv,title,time,note,tags,s){const link=s&&s.lat?`<div class="extra"><a target="_blank" href="https://www.google.com/maps/search/posto+restaurante+banheiro/@${s.lat},${s.lon},14z">Abrir busca de paradas próximas</a></div>`:'';return `<div class="stop"><div class="label">KM ${esc(kmv)}</div><h3>${esc(t)} — ${esc(title)}</h3><p><strong>${esc(time)}</strong></p><p>${esc(note)}</p><div class="tags">${(tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</div>${link}</div>`}
+function renderTolls(d){
+  const t=d.tolls; if(t.status==='sem_api'){$('tollsArea').innerHTML=`<div class="notice danger"><strong>Pedágio não calculado automaticamente.</strong><br>${esc(t.note)}<br><br>Para ficar perfeito: coloque <code>TOLLGURU_API_KEY</code> no <code>proxy-ia/.env</code>. O app já está preparado.</div>`;return}
+  if(!t.items||!t.items.length){$('tollsArea').innerHTML=`<div class="notice"><strong>${esc(t.source)}</strong><br>Total estimado: <strong>${money(t.total,t.currency||'BRL')}</strong><br>${esc(t.note||'')}</div>`;return}
+  $('tollsArea').innerHTML=`<table><thead><tr><th>Praça</th><th>Rodovia</th><th>Valor</th></tr></thead><tbody>${t.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.road||'')}</td><td>${money(i.cashCost,i.currency||t.currency||'BRL')}</td></tr>`).join('')}</tbody></table><div class="value">Total: ${money(t.total,t.currency||'BRL')}</div>`
 }
-
-/* -------- clima -------- */
-function renderClima(clima, nomeLocal){
-  const [icone,desc] = CODIGOS_CLIMA[clima.codigo] || ['❔','Sem dados'];
-  el('clima-area').innerHTML = `
-    <div class="icone">${icone}</div>
-    <div>
-      <div class="rotulo">${nomeLocal} — ${clima.dataUsada}</div>
-      <div class="valor" style="font-size:20px;">${desc}, ${Math.round(clima.min)}° a ${Math.round(clima.max)}°C</div>
-      <div class="extra">${clima.chuva}% de chance de chuva${clima.foraDoAlcance? ' · previsão aproximada (data fora do alcance de 16 dias)':''}</div>
-    </div>`;
+function renderChecklist(d){
+  $('checklist').innerHTML=(d.checklist||[]).map((g,gi)=>`<div class="checkgroup"><h3>${esc(g.title)}</h3>${g.items.map((it,ii)=>`<label class="checkitem"><input type="checkbox" onchange="this.closest('.checkitem').classList.toggle('done',this.checked)"><span>${esc(it)}</span></label>`).join('')}</div>`).join('')
 }
-
-/* -------- helpers de UI -------- */
-/* Escapa strings para inserção segura em innerHTML (evita XSS) */
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-
-function cardResumo(rotulo,valor,extra,cor=''){
-  return `<div class="resumo-card"><div class="rotulo">${esc(rotulo)}</div><div class="valor ${esc(cor)}">${esc(String(valor))}</div>${extra?`<div class="extra">${esc(String(extra))}</div>`:''}</div>`;
+function renderSources(d){
+  const po=d.fuel.precoOrigem, pd=d.fuel.precoDestino;
+  $('fuelSource').innerHTML=`<strong>Combustível:</strong> ${esc(d.fuel.produto)} · média usada ${money(d.fuel.precoMedioLitro)}/L.<br>Origem: ${po?.found?money(po.price)+' · '+esc(po.scope)+' · '+esc(po.period.start)+' a '+esc(po.period.end):'não encontrado'}<br>Destino: ${pd?.found?money(pd.price)+' · '+esc(pd.scope)+' · '+esc(pd.period.start)+' a '+esc(pd.period.end):'não encontrado'}`;
+  $('apiSource').innerHTML=`<strong>Localização:</strong> ${esc(d.origem.source)} / ${esc(d.destino.source)}<br><strong>Rota:</strong> ${esc(d.route.source)} · alternativas: ${d.route.alternativas||1}`;
+  if(d.tolls.status==='sem_api'){$('tollNotice').style.display='block';$('tollNotice').textContent=d.tolls.note}else $('tollNotice').style.display='none';
 }
-function criarParada({tipo,km,titulo,horario,desc,tags}){
-  const div = document.createElement('div');
-  div.className = 'parada '+tipo;
-  div.innerHTML = `
-    <div class="topo-parada">
-      <h3>${esc(titulo)}</h3>
-      <span class="horario">${esc(horario||'')}</span>
-    </div>
-    ${km!==''? `<div class="km">KM ${esc(String(km))}</div>`:''}
-    <p>${esc(desc)}</p>
-    ${(tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
-  `;
-  return div;
-}
-function formatarHoras(h){
-  const inteiras = Math.floor(h), minutos = Math.round((h-inteiras)*60);
-  return `${inteiras}h${minutos.toString().padStart(2,'0')}`;
-}
-function formatarDataHora(d){
-  return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-}
-
-/* -------- assistente IA (OpenAI, opcional) -------- */
-function adicionarMsg(texto, quem){
-  const box = el('chat-box');
-  const div = document.createElement('div');
-  div.className = 'msg '+quem;
-  div.textContent = texto;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
-/* Assistente de IA:
-   1) Se o campo #proxy-ia tiver uma URL (seu Cloudflare Worker), usa a OpenAI através dele —
-      a chave fica só no servidor do Worker, nunca no navegador.
-   2) Caso contrário, usa a API da Anthropic já embutida quando esta página roda dentro do
-      Claude (claude.ai) como artifact — não precisa de nenhuma chave.
-   Chamadas diretas do navegador para api.openai.com são bloqueadas por CORS, por isso não
-   fazemos fetch direto para lá — sempre passamos pelo proxy. */
+function addMsg(txt,who){const div=document.createElement('div');div.className='msg '+who;div.textContent=txt;$('chat').appendChild(div);$('chat').scrollTop=$('chat').scrollHeight}
 async function perguntarIA(){
-  const pergunta = el('chat-pergunta').value.trim();
-  if(!pergunta) return;
-  adicionarMsg(pergunta,'user');
-  el('chat-pergunta').value = '';
-  adicionarMsg('Pensando…','ia');
-  const box = el('chat-box');
-  const contexto = `Viagem de ${el('origem').value} para ${el('destino').value}, ${el('pessoas').value} pessoas, `+
-    `${el('tem-criancas').checked?'com crianças, ':''}${el('tem-pets').checked?'com pet, ':''}modo ${modoAtual}. `+
-    `Carro: ${el('modelo-carro')?.value||''}, consumo ${el('consumo')?.value||''} km/L, combustível ${el('tipo-combustivel')?.value||''}, preço R$ ${el('preco-combustivel')?.value||''}/L. `+
-    `Responda com checklist, rota, paradas, custos, riscos e dicas práticas para viagem em família no Brasil.`;
-  const proxyUrl = el('proxy-ia').value.trim();
-
-  try{
-    let texto;
-    if(proxyUrl){
-      texto = await perguntarViaProxyOpenAI(proxyUrl, contexto, pergunta);
-    } else {
-      texto = await perguntarViaAnthropicEmbutida(contexto, pergunta);
-    }
-    box.lastChild.remove();
-    adicionarMsg(texto || 'Sem resposta.', 'ia');
-  }catch(err){
-    box.lastChild.remove();
-    adicionarMsg('Não consegui responder agora: '+err.message, 'ia');
-  }
+  const p=$('pergunta').value.trim(); if(!p)return; addMsg(p,'user'); $('pergunta').value=''; addMsg('Pensando...','ia');
+  try{const contexto=lastPlan?JSON.stringify({origem:lastPlan.origem,destino:lastPlan.destino,route:lastPlan.route,fuel:lastPlan.fuel,tolls:lastPlan.tolls,stops:lastPlan.stops,input:lastPlan.input}).slice(0,7000):'Sem roteiro gerado ainda.'; const r=await fetch(api()+'/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contexto,pergunta:p})}); const data=await r.json().catch(()=>({})); if(!r.ok)throw new Error(data.error||'HTTP '+r.status); $('chat').lastChild.remove(); addMsg(data.texto||'Sem resposta.','ia')}catch(e){$('chat').lastChild.remove(); addMsg('Erro: '+e.message,'ia')}
 }
-
-async function perguntarViaProxyOpenAI(proxyUrl, contexto, pergunta){
-  const resp = await fetch(proxyUrl, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({contexto, pergunta})
-  });
-  const data = await resp.json().catch(()=>({}));
-  if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
-  return (data.texto || '').trim();
-}
-
-async function perguntarViaAnthropicEmbutida(contexto, pergunta){
-  /* Nota: chamadas diretas a api.anthropic.com são bloqueadas por CORS em navegadores comuns.
-     Esta função só funciona quando a página roda como artifact dentro do Claude.ai.
-     Para usar em qualquer outro ambiente, configure o proxy da OpenAI nas configurações avançadas. */
-  const resp = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'anthropic-version':'2023-06-01'
-    },
-    body: JSON.stringify({
-      model:'claude-sonnet-4-6',
-      max_tokens: 500,
-      messages:[
-        {role:'user', content:'Você é um assistente de viagens de família no Brasil. Seja objetivo, prático e priorize segurança e conforto para crianças quando aplicável. Responda curto, em português.\n\n'+contexto+'\n\nPergunta: '+pergunta}
-      ]
-    })
-  });
-  if(!resp.ok){
-    const status = resp.status;
-    if(status === 401)
-      throw new Error('Autenticação necessária. Configure o proxy da OpenAI nas configurações avançadas para usar o assistente.');
-    throw new Error(`Erro HTTP ${status} ao contatar a IA. Configure o proxy da OpenAI nas configurações avançadas.`);
-  }
-  const data = await resp.json();
-  return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
-}
-el('chat-pergunta').addEventListener('keydown', e=>{ if(e.key==='Enter') perguntarIA(); });
-// Proxy padrão do seu backend Hostinger/Traefik
-if(!el('proxy-ia').value) el('proxy-ia').value = 'https://rota-certa.prafael.com.br';
-
-/* estado inicial — tabela de pedágios começa vazia; a primeira linha é adicionada ao gerar o roteiro */
 </script>
 </body>
 </html>
