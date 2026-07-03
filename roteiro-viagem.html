@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rota Certa — Planejador de Viagem em Família</title>
+<title>Rota Certa — Planejador de Viagem em Família v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -213,8 +213,8 @@
       </div>
       <div class="campo">
         <label for="destino">Destino</label>
-        <input id="destino" type="text" placeholder="Ex: Penha, SC">
-        <small>Use nome de cidade ou município. Ex: "Penha, SC" (não "Beto Carreiro World").</small>
+        <input id="destino" type="text" placeholder="Ex: Beto Carrero World ou Penha, SC">
+        <small>Pode digitar atração ou cidade. Ex: "Beto Carrero", "Beto Carreiro", "Penha, SC", "Balneário Camboriú".</small>
       </div>
       <div class="campo">
         <label for="data-partida">Data e hora de partida</label>
@@ -251,6 +251,21 @@
         <div class="campo">
           <label for="preco-combustivel">Preço do combustível (R$/L)</label>
           <input id="preco-combustivel" type="number" step="0.01" value="5.89">
+          <small>Atualize pelo preço real do posto antes de sair.</small>
+        </div>
+        <div class="campo">
+          <label for="tipo-combustivel">Tipo de combustível</label>
+          <select id="tipo-combustivel">
+            <option value="gasolina">Gasolina</option>
+            <option value="etanol">Etanol</option>
+            <option value="diesel">Diesel</option>
+            <option value="flex">Flex / misto</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="margem-combustivel">Margem de segurança (%)</label>
+          <input id="margem-combustivel" type="number" value="10" min="0" max="50">
+          <small>Use 10% a 20% para trânsito, ar-condicionado, serra e desvios.</small>
         </div>
       </div>
     </div>
@@ -286,7 +301,7 @@
         </div>
         <div class="campo">
           <label for="proxy-ia">URL do proxy de IA (Cloudflare Worker)</label>
-          <input id="proxy-ia" type="text" placeholder="https://rota-certa-ia.SEU-USUARIO.workers.dev">
+          <input id="proxy-ia" type="text" value="https://rota-certa.prafael.com.br" placeholder="https://rota-certa.prafael.com.br">
           <small>Deploy o worker.js (arquivo separado) na Cloudflare e cole a URL aqui para o assistente usar a OpenAI com sua chave protegida no servidor. Sem isso, o assistente usa a IA da Anthropic embutida.</small>
         </div>
         <div class="campo">
@@ -358,13 +373,24 @@
 
 </main>
 
-<footer>Rota Certa — feito para viagens de família tranquilas e seguras. Distâncias sem chave de mapa são estimativas.</footer>
+<footer>Rota Certa v2 — feito para viagens de família tranquilas e seguras. Destinos especiais corrigidos: Beto Carrero/Beto Carreiro/Penha. Distâncias sem chave de mapa são estimativas.</footer>
 
 <script>
 /* =========================================================================
    BASE DE CARROS — consumo médio estrada (km/l gasolina) e tanque (L).
    Ajuste livremente ou plugue uma API de fichas técnicas se quiser mais precisão.
    ========================================================================= */
+const DESTINOS_ESPECIAIS = {
+  // Corrige nomes digitados pelo usuário e atrações que o Open-Meteo não acha bem
+  'beto carrero': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
+  'beto carreiro': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
+  'beto carrero world': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
+  'beto carreiro world': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
+  'parque beto carrero': {lat:-26.8007, lon:-48.6157, nome:'Beto Carrero World, Penha, Santa Catarina'},
+  'penha': {lat:-26.7754, lon:-48.6465, nome:'Penha, Santa Catarina'},
+  'penha sc': {lat:-26.7754, lon:-48.6465, nome:'Penha, Santa Catarina'}
+};
+
 const BASE_CARROS = {
   "Fiat Mobi":            {consumo:15.5, tanque:47},
   "Fiat Argo":             {consumo:13.8, tanque:48},
@@ -424,17 +450,19 @@ function montarChecklist(){
   const criancas = el('tem-criancas').checked;
   const pets = el('tem-pets').checked;
   const itens = [
-    "Documentos (RG/CNH/CRLV)","Carregador de celular / power bank","Água e lanches para a estrada",
-    "Kit de primeiros socorros","Estepe, macaco e chave de roda calibrados","Pneus e óleo revisados antes de sair",
-    "Dinheiro/tag para pedágio","Seguro do veículo e assistência 24h"
+    "Documentos (RG/CNH/CRLV)","Cartão do convênio / documentos de saúde","Carregador de celular / power bank","Suporte veicular e cabo USB",
+    "Água e lanches para a estrada","Sacos de lixo e lenços umedecidos","Kit de primeiros socorros","Remédios de uso contínuo",
+    "Estepe, macaco e chave de roda calibrados","Pneus, óleo, água e limpador revisados antes de sair",
+    "Dinheiro/tag para pedágio","Seguro do veículo e assistência 24h","Roteiro salvo offline / print da rota",
+    "Reservas, ingressos e comprovantes salvos no celular"
   ];
   if(modoAtual==='carro'){
-    itens.push("Triângulo e colete refletivo");
+    itens.push("Triângulo e colete refletivo","Calibrar pneus com carro cheio","Encher o tanque antes de pegar estrada","Paradas principais marcadas no mapa");
   } else {
     itens.push("Check-in online feito","Bagagem dentro do limite de peso");
   }
-  if(criancas) itens.push("Cadeirinha/bebê conforto instalado","Brinquedos e atividades para o trajeto","Remédios infantis de uso comum");
-  if(pets) itens.push("Caixa de transporte / cinto para pet","Água, ração e coleira extra para o pet");
+  if(criancas) itens.push("Cadeirinha/bebê conforto instalada","Troca de roupa fácil na mala de mão","Brinquedos e atividades para o trajeto","Fone/tablet carregado","Remédios infantis de uso comum","Paradas com banheiro limpo/playground quando possível");
+  if(pets) itens.push("Caixa de transporte / cinto para pet","Água, ração e coleira extra para o pet","Carteira de vacinação do pet","Tapete higiênico/sacos coletores");
 
   const cont = el('checklist');
   cont.innerHTML = '';
@@ -475,29 +503,46 @@ function somarPedagios(){
 
 /* -------- geocodificação e clima via Open-Meteo (gratuito, sem chave) -------- */
 async function geocodificar(nomeCidade){
-  let nomeLimpo = nomeCidade.trim();
-  let res = await buscarOpenMeteo(nomeLimpo);
-  
-  if (!res && (nomeLimpo.includes(',') || nomeLimpo.includes('-'))) {
-    const partes = nomeLimpo.split(/[,|-]/);
-    if (partes[0].trim().length >= 2) {
-      res = await buscarOpenMeteo(partes[0].trim());
-    }
+  const original = nomeCidade.trim();
+  let nomeLimpo = normalizarBusca(original);
+
+  // 1) Destinos/atrações conhecidos: resolve “Beto Carreiro” e variações.
+  if (DESTINOS_ESPECIAIS[nomeLimpo]) return DESTINOS_ESPECIAIS[nomeLimpo];
+  for (const chave of Object.keys(DESTINOS_ESPECIAIS)) {
+    if (nomeLimpo.includes(chave)) return DESTINOS_ESPECIAIS[chave];
   }
 
-  if (!res && nomeLimpo.includes(' ')) {
-    const partes = nomeLimpo.split(/\s+/);
-    if (partes.length > 1) {
-      const ultima = partes[partes.length - 1];
-      if (ultima.length === 2 && ultima === ultima.toUpperCase()) {
-        const semEstado = partes.slice(0, -1).join(' ').trim();
-        res = await buscarOpenMeteo(semEstado);
-      }
-    }
+  // 2) Open-Meteo: bom para cidades.
+  let tentativas = [original];
+  if (original.includes(',') || original.includes('-')) tentativas.push(original.split(/[,|-]/)[0].trim());
+  if (nomeLimpo.endsWith(' sc')) tentativas.push(original.replace(/\s+sc$/i,'').trim());
+  if (nomeLimpo.endsWith(' sp')) tentativas.push(original.replace(/\s+sp$/i,'').trim());
+
+  for (const termo of [...new Set(tentativas.filter(Boolean))]) {
+    const res = await buscarOpenMeteo(termo);
+    if (res) return res;
   }
 
-  if(!res) throw new Error(`"${nomeCidade}" não encontrado. Tente digitar apenas o nome da cidade (ex: "Penha" em vez de "Penha, SC").`);
-  return res;
+  // 3) Nominatim/OpenStreetMap: melhor para pontos turísticos e nomes comerciais.
+  const osm = await buscarNominatim(original);
+  if (osm) return osm;
+
+  throw new Error(`"${nomeCidade}" não encontrado. Tente: "Beto Carrero World", "Penha, SC" ou cidade + UF.`);
+}
+
+function normalizarBusca(txt){
+  return String(txt||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+async function buscarNominatim(nome) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(nome)}`;
+    const r = await fetch(url, {headers:{'Accept':'application/json'}});
+    const j = await r.json();
+    if(!Array.isArray(j) || !j.length) return null;
+    const res = j[0];
+    return {lat:parseFloat(res.lat), lon:parseFloat(res.lon), nome:res.display_name.split(',').slice(0,4).join(',')};
+  } catch(e) { return null; }
 }
 
 async function buscarOpenMeteo(nome) {
@@ -648,11 +693,16 @@ function renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO
   const consumo = parseFloat(el('consumo').value)||12;
   const tanque = parseFloat(el('tanque').value)||50;
   const precoLitro = parseFloat(el('preco-combustivel').value)||0;
+  const margemPct = Math.max(0, parseFloat(el('margem-combustivel').value)||0);
+  const tipoCombustivel = el('tipo-combustivel').value;
   const minutosParada = parseFloat(el('minutos-parada').value)||20;
   const intervaloHoras = parseFloat(el('intervalo-parada').value)||2;
 
-  const litrosNecessarios = distanciaKm/consumo;
+  const litrosBase = distanciaKm/consumo;
+  const litrosNecessarios = litrosBase*(1+margemPct/100);
   const custoCombustivel = litrosNecessarios*precoLitro;
+  const custoPorPessoa = pessoas ? custoCombustivel/pessoas : custoCombustivel;
+  const custoIdaVolta = custoCombustivel*2;
   const autonomiaTanque = tanque*consumo;
   const reabastecimentos = Math.max(0, Math.ceil(distanciaKm/autonomiaTanque) - 1);
 
@@ -668,7 +718,9 @@ function renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO
     ${cardResumo('Distância', distanciaKm.toFixed(0)+' km', fonteRota)}
     ${cardResumo('Tempo de estrada', formatarHoras(duracaoHoras), 'sem contar paradas')}
     ${cardResumo('Chegada prevista', formatarDataHora(chegada), formatarHoras(duracaoTotalHoras)+' com paradas', 'verde')}
-    ${cardResumo('Combustível', 'R$ '+custoCombustivel.toFixed(2).replace('.',','), litrosNecessarios.toFixed(0)+' litros')}
+    ${cardResumo('Combustível ida', 'R$ '+custoCombustivel.toFixed(2).replace('.',','), litrosNecessarios.toFixed(1)+' L · '+tipoCombustivel+' · margem '+margemPct+'%')}
+    ${cardResumo('Combustível por pessoa', 'R$ '+custoPorPessoa.toFixed(2).replace('.',','), 'ida · estimado')}
+    ${cardResumo('Ida e volta combustível', 'R$ '+custoIdaVolta.toFixed(2).replace('.',','), 'sem pedágios')}
     ${cardResumo('Reabastecimentos', reabastecimentos+'x no caminho', 'autonomia ~'+autonomiaTanque.toFixed(0)+' km · saindo com tanque cheio')}
     ${cardResumo('Pessoas a bordo', pessoas, modoAtual)}
   `;
@@ -690,7 +742,7 @@ function renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO
     estrada.appendChild(criarParada({
       tipo:'parada', km:kmParada, titulo:'Parada de descanso '+i,
       horario: formatarDataHora(horaCursor)+ ' · '+minutosParada+' min',
-      desc: 'Aproveite para esticar as pernas, ir ao banheiro e verificar o nível de combustível. Procure postos com estrutura para família nesta região.',
+      desc: 'Pare em local movimentado e bem avaliado. Estique as pernas, vá ao banheiro, hidrate a família e confira combustível. Priorize posto/restaurante com banheiro limpo, iluminação, fraldário/playground se houver crianças.',
       tags: montarTagsParada()
     }));
   }
@@ -709,7 +761,7 @@ function renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO
 }
 
 function montarTagsParada(){
-  const tags = ['banheiro','combustível'];
+  const tags = ['banheiro','combustível','lanche','segurança'];
   if(el('tem-criancas').checked) tags.push('playground');
   if(el('tem-pets').checked) tags.push('pet-friendly');
   return tags;
@@ -814,7 +866,9 @@ async function perguntarIA(){
   adicionarMsg('Pensando…','ia');
   const box = el('chat-box');
   const contexto = `Viagem de ${el('origem').value} para ${el('destino').value}, ${el('pessoas').value} pessoas, `+
-    `${el('tem-criancas').checked?'com crianças, ':''}${el('tem-pets').checked?'com pet, ':''}modo ${modoAtual}.`;
+    `${el('tem-criancas').checked?'com crianças, ':''}${el('tem-pets').checked?'com pet, ':''}modo ${modoAtual}. `+
+    `Carro: ${el('modelo-carro')?.value||''}, consumo ${el('consumo')?.value||''} km/L, combustível ${el('tipo-combustivel')?.value||''}, preço R$ ${el('preco-combustivel')?.value||''}/L. `+
+    `Responda com checklist, rota, paradas, custos, riscos e dicas práticas para viagem em família no Brasil.`;
   const proxyUrl = el('proxy-ia').value.trim();
 
   try{
@@ -871,6 +925,8 @@ async function perguntarViaAnthropicEmbutida(contexto, pergunta){
   return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
 }
 el('chat-pergunta').addEventListener('keydown', e=>{ if(e.key==='Enter') perguntarIA(); });
+// Proxy padrão do seu backend Hostinger/Traefik
+if(!el('proxy-ia').value) el('proxy-ia').value = 'https://rota-certa.prafael.com.br';
 
 /* estado inicial — tabela de pedágios começa vazia; a primeira linha é adicionada ao gerar o roteiro */
 </script>
