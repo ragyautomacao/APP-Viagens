@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rota Certa — Planejador de Viagem em Família</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asfalto:#12161D;
+    --asfalto-2:#1B212B;
+    --card:#1E2530;
+    --linha:#2A3240;
+    --amarelo:#FFC93C;
+    --verde:#22A366;
+    --verde-esc:#17693F;
+    --vermelho:#E4572E;
+    --texto:#F1F1EC;
+    --texto-mudo:#98A2B3;
+    --branco-faixa: rgba(255,201,60,.55);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #1A2C24 0%, transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, #241C13 0%, transparent 55%),
+      var(--asfalto);
+    color:var(--texto);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Rajdhani',sans-serif; text-transform:uppercase; letter-spacing:.02em;}
+  .mono{font-family:'Roboto Mono',monospace;}
+  a{color:var(--amarelo);}
+
+  /* ---------- topo / hero ---------- */
+  .faixa-topo{
+    height:6px;
+    background:repeating-linear-gradient(90deg, var(--amarelo) 0 38px, transparent 38px 66px);
+    opacity:.9;
+  }
+  header.hero{
+    max-width:1180px;margin:0 auto;padding:56px 24px 28px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .eyebrow{
+    color:var(--amarelo); font-family:'Roboto Mono',monospace; font-size:12.5px;
+    letter-spacing:.18em; text-transform:uppercase; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:"";width:22px;height:2px;background:var(--amarelo);display:inline-block;}
+  header.hero h1{font-size:clamp(34px,5.4vw,58px); font-weight:700; margin:0; line-height:.98;}
+  header.hero h1 span{color:var(--verde);}
+  header.hero p{color:var(--texto-mudo); max-width:640px; font-size:16px; margin:2px 0 0;}
+
+  main{max-width:1180px;margin:0 auto;padding:8px 24px 100px;}
+
+  /* ---------- formulário ---------- */
+  .painel{
+    background:var(--card); border:1px solid var(--linha); border-radius:var(--radius);
+    padding:28px; margin-bottom:28px;
+  }
+  .painel h2{font-size:22px;margin:0 0 4px;display:flex;align-items:center;gap:10px;}
+  .painel h2 .num{color:var(--asfalto);background:var(--amarelo);width:26px;height:26px;border-radius:6px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-family:'Roboto Mono',monospace;}
+  .painel .sub{color:var(--texto-mudo);font-size:13.5px;margin:0 0 20px;}
+
+  .modo-toggle{display:flex;gap:10px;margin-bottom:22px;}
+  .modo-toggle button{
+    flex:1; padding:14px; border-radius:10px; border:1px solid var(--linha); background:var(--asfalto-2);
+    color:var(--texto-mudo); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:16px;
+    letter-spacing:.03em; text-transform:uppercase; cursor:pointer; transition:.15s;
+  }
+  .modo-toggle button.ativo{background:var(--verde-esc);border-color:var(--verde);color:#fff;}
+  .modo-toggle button:hover{border-color:var(--amarelo);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .campo{display:flex;flex-direction:column;gap:6px;}
+  .campo label{font-size:12.5px;color:var(--texto-mudo);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .campo input, .campo select, .campo textarea{
+    background:var(--asfalto-2); border:1px solid var(--linha); border-radius:8px; color:var(--texto);
+    padding:11px 12px; font-size:14.5px; font-family:'Inter',sans-serif; outline:none;
+  }
+  .campo input:focus, .campo select:focus, .campo textarea:focus{border-color:var(--amarelo);}
+  .campo small{color:var(--texto-mudo);font-size:11.5px;}
+  .linha-check{display:flex;align-items:center;gap:8px;margin-top:4px;}
+  .linha-check input{width:16px;height:16px;accent-color:var(--verde);}
+  .linha-check label{font-size:13.5px;color:var(--texto);text-transform:none;letter-spacing:0;font-weight:400;}
+
+  details.avancado{margin-top:22px;border-top:1px dashed var(--linha);padding-top:16px;}
+  details.avancado summary{cursor:pointer;color:var(--amarelo);font-size:13.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+  details.avancado .grid{margin-top:16px;}
+  .aviso{
+    background:rgba(228,87,46,.1); border:1px solid rgba(228,87,46,.35); color:#F3B6A0;
+    padding:10px 12px; border-radius:8px; font-size:12.5px; margin-top:14px;
+  }
+
+  .btn-principal{
+    margin-top:24px; width:100%; padding:16px; border:none; border-radius:10px;
+    background:linear-gradient(90deg, var(--amarelo), #FFDE85); color:#14181F;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:19px; letter-spacing:.03em;
+    text-transform:uppercase; cursor:pointer; transition:.15s;
+  }
+  .btn-principal:hover{filter:brightness(1.06);}
+  .btn-principal:disabled{opacity:.55;cursor:wait;}
+
+  .btn-sec{
+    padding:10px 16px;border-radius:8px;border:1px solid var(--linha);background:var(--asfalto-2);
+    color:var(--texto);font-size:13px;cursor:pointer;font-family:'Inter';
+  }
+  .btn-sec:hover{border-color:var(--amarelo);}
+
+  /* ---------- resumo ---------- */
+  #resultado{display:none;}
+  .resumo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:28px;}
+  .resumo-card{background:var(--card);border:1px solid var(--linha);border-radius:12px;padding:18px;}
+  .resumo-card .rotulo{font-size:11.5px;color:var(--texto-mudo);text-transform:uppercase;letter-spacing:.07em;}
+  .resumo-card .valor{font-family:'Roboto Mono',monospace;font-size:26px;font-weight:700;margin-top:6px;color:var(--amarelo);}
+  .resumo-card .valor.verde{color:var(--verde);}
+  .resumo-card .extra{font-size:12px;color:var(--texto-mudo);margin-top:4px;}
+
+  /* ---------- clima ---------- */
+  .clima-card{display:flex;align-items:center;gap:16px;}
+  .clima-card .icone{font-size:34px;}
+
+  /* ---------- estrada / roteiro interativo ---------- */
+  .estrada{position:relative;margin:8px 0 30px;padding-left:46px;}
+  .estrada::before{
+    content:"";position:absolute;left:20px;top:6px;bottom:6px;width:3px;
+    background:repeating-linear-gradient(180deg, var(--amarelo) 0 16px, transparent 16px 30px);
+  }
+  .parada{position:relative;background:var(--card);border:1px solid var(--linha);border-radius:12px;
+    padding:16px 18px;margin-bottom:16px;}
+  .parada::before{
+    content:"";position:absolute;left:-38px;top:18px;width:16px;height:16px;border-radius:50%;
+    background:var(--verde);border:3px solid var(--asfalto);
+  }
+  .parada.partida::before, .parada.chegada::before{background:var(--amarelo);}
+  .parada .topo-parada{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .parada .km{font-family:'Roboto Mono',monospace;color:var(--amarelo);font-size:12.5px;}
+  .parada h3{margin:2px 0 4px;font-size:19px;}
+  .parada p{margin:0;color:var(--texto-mudo);font-size:13.5px;}
+  .parada .horario{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--verde);}
+  .tag{display:inline-block;background:var(--asfalto-2);border:1px solid var(--linha);color:var(--texto-mudo);
+    font-size:11px;padding:3px 8px;border-radius:20px;margin-top:8px;margin-right:6px;text-transform:uppercase;letter-spacing:.05em;}
+
+  /* ---------- pedágios ---------- */
+  table.pedagios{width:100%;border-collapse:collapse;margin-top:10px;}
+  table.pedagios th{text-align:left;font-size:11.5px;color:var(--texto-mudo);text-transform:uppercase;letter-spacing:.05em;
+    padding:8px 6px;border-bottom:1px solid var(--linha);}
+  table.pedagios td{padding:9px 6px;border-bottom:1px solid var(--linha);font-size:14px;}
+  table.pedagios input{width:100%;background:var(--asfalto-2);border:1px solid var(--linha);border-radius:6px;color:var(--texto);padding:7px 8px;font-size:13.5px;}
+  table.pedagios td.rm{width:36px;text-align:center;}
+  table.pedagios td.rm button{background:none;border:none;color:var(--vermelho);cursor:pointer;font-size:15px;}
+  .total-pedagio{text-align:right;margin-top:10px;font-family:'Roboto Mono',monospace;font-size:15px;}
+
+  /* ---------- checklist ---------- */
+  .checklist{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
+  .item-check{display:flex;align-items:center;gap:10px;background:var(--asfalto-2);border:1px solid var(--linha);
+    border-radius:8px;padding:11px 12px;cursor:pointer;font-size:13.5px;}
+  .item-check input{width:16px;height:16px;accent-color:var(--verde);}
+  .item-check.feito{opacity:.5;text-decoration:line-through;}
+
+  /* ---------- assistente IA ---------- */
+  .chat-box{background:var(--asfalto-2);border:1px solid var(--linha);border-radius:10px;padding:14px;
+    max-height:340px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:10px;}
+  .msg{max-width:85%;padding:10px 13px;border-radius:10px;font-size:13.5px;}
+  .msg.user{align-self:flex-end;background:var(--verde-esc);color:#fff;}
+  .msg.ia{align-self:flex-start;background:#2A3240;color:var(--texto);}
+  .chat-input{display:flex;gap:10px;}
+  .chat-input input{flex:1;}
+
+  footer{max-width:1180px;margin:0 auto;padding:20px 24px 60px;color:var(--texto-mudo);font-size:12px;text-align:center;}
+
+  @media print{
+    .painel, .btn-principal, .btn-sec, details, header .eyebrow{display:none!important;}
+    body{background:#fff;color:#000;}
+    .parada, .resumo-card{border:1px solid #ccc;background:#fff;color:#000;}
+  }
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;} }
+</style>
+</head>
+<body>
+
+<div class="faixa-topo"></div>
+
+<header class="hero">
+  <div class="eyebrow">Planejamento de viagem em família</div>
+  <h1>Rota <span>Certa</span></h1>
+  <p>Coloque destino, carro e quantas pessoas vão. O sistema monta o roteiro: paradas de descanso, custo de combustível, previsão do tempo no destino e um checklist de segurança — tudo pensado para chegar tranquilo.</p>
+</header>
+
+<main>
+
+  <!-- ============ FORMULÁRIO ============ -->
+  <section class="painel">
+    <h2><span class="num">1</span> Dados da viagem</h2>
+    <p class="sub">Preencha o essencial. Os campos avançados são opcionais.</p>
+
+    <div class="modo-toggle">
+      <button type="button" id="btn-modo-carro" class="ativo" onclick="definirModo('carro')">🚗 De carro</button>
+      <button type="button" id="btn-modo-aviao" onclick="definirModo('aviao')">✈️ De avião</button>
+    </div>
+
+    <div class="grid">
+      <div class="campo">
+        <label for="origem">Saindo de</label>
+        <input id="origem" type="text" placeholder="Ex: São Paulo, SP">
+      </div>
+      <div class="campo">
+        <label for="destino">Destino</label>
+        <input id="destino" type="text" placeholder="Ex: Penha, SC">
+        <small>Use nome de cidade ou município. Ex: "Penha, SC" (não "Beto Carreiro World").</small>
+      </div>
+      <div class="campo">
+        <label for="data-partida">Data e hora de partida</label>
+        <input id="data-partida" type="datetime-local">
+      </div>
+      <div class="campo">
+        <label for="pessoas">Quantas pessoas</label>
+        <input id="pessoas" type="number" min="1" value="4">
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:16px;">
+      <div class="campo">
+        <div class="linha-check"><input type="checkbox" id="tem-criancas"><label for="tem-criancas">Vai com crianças pequenas</label></div>
+        <div class="linha-check"><input type="checkbox" id="tem-pets"><label for="tem-pets">Vai com pet</label></div>
+      </div>
+    </div>
+
+    <!-- ---- campos específicos: carro ---- -->
+    <div id="campos-carro" style="margin-top:20px;">
+      <div class="grid">
+        <div class="campo">
+          <label for="modelo-carro">Modelo do carro</label>
+          <select id="modelo-carro" onchange="preencherConsumo()"></select>
+        </div>
+        <div class="campo">
+          <label for="consumo">Consumo (km/l)</label>
+          <input id="consumo" type="number" step="0.1" value="12">
+        </div>
+        <div class="campo">
+          <label for="tanque">Tanque (litros)</label>
+          <input id="tanque" type="number" value="50">
+        </div>
+        <div class="campo">
+          <label for="preco-combustivel">Preço do combustível (R$/L)</label>
+          <input id="preco-combustivel" type="number" step="0.01" value="5.89">
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- campos específicos: avião ---- -->
+    <div id="campos-aviao" style="display:none;margin-top:20px;">
+      <div class="grid">
+        <div class="campo">
+          <label for="voo-numero">Número do voo</label>
+          <input id="voo-numero" type="text" placeholder="Ex: G3 1234">
+        </div>
+        <div class="campo">
+          <label for="voo-horario">Horário de embarque</label>
+          <input id="voo-horario" type="datetime-local">
+        </div>
+        <div class="campo">
+          <label for="voo-tipo">Voo</label>
+          <select id="voo-tipo">
+            <option value="nacional">Nacional</option>
+            <option value="internacional">Internacional</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <details class="avancado">
+      <summary>Configurações avançadas (opcional — melhora a precisão)</summary>
+      <div class="grid">
+        <div class="campo">
+          <label for="chave-google">Chave da Google Maps API</label>
+          <input id="chave-google" type="text" placeholder="Cole sua chave (Directions API)">
+          <small>Sem chave, a distância é estimada em linha reta com fator de curva. Com a chave, o roteiro usa a rota rodoviária real, com pedágios detectados quando disponíveis e alternativas de rota.</small>
+        </div>
+        <div class="campo">
+          <label for="proxy-ia">URL do proxy de IA (Cloudflare Worker)</label>
+          <input id="proxy-ia" type="text" placeholder="https://rota-certa-ia.SEU-USUARIO.workers.dev">
+          <small>Deploy o worker.js (arquivo separado) na Cloudflare e cole a URL aqui para o assistente usar a OpenAI com sua chave protegida no servidor. Sem isso, o assistente usa a IA da Anthropic embutida.</small>
+        </div>
+        <div class="campo">
+          <label for="minutos-parada">Duração de cada parada (min)</label>
+          <input id="minutos-parada" type="number" value="20">
+        </div>
+        <div class="campo">
+          <label for="intervalo-parada">Parar a cada (horas de estrada)</label>
+          <input id="intervalo-parada" type="number" step="0.5" value="2">
+          <small>A ABDET/CONTRAN recomenda uma pausa a cada 2h de direção para evitar fadiga ao volante.</small>
+        </div>
+      </div>
+      <div class="aviso">A chave do Google Maps fica apenas na memória desta página. O assistente de IA (passo 7) usa o proxy da OpenAI se você configurar a URL do Worker, ou a Anthropic embutida automaticamente caso contrário — nenhuma chave de IA fica exposta no navegador.</div>
+    </details>
+
+    <button class="btn-principal" id="btn-planejar" onclick="planejarViagem()">Gerar roteiro da viagem</button>
+  </section>
+
+  <!-- ============ RESULTADO ============ -->
+  <section id="resultado">
+
+    <section class="painel">
+      <h2><span class="num">2</span> Resumo da viagem</h2>
+      <div class="resumo-grid" id="resumo-grid"></div>
+    </section>
+
+    <section class="painel">
+      <h2><span class="num">3</span> Previsão do tempo no destino</h2>
+      <div id="clima-area" class="resumo-card clima-card">Consultando previsão…</div>
+    </section>
+
+    <section class="painel">
+      <h2><span class="num">4</span> Roteiro interativo</h2>
+      <p class="sub">Partida, paradas sugeridas e chegada, na ordem da estrada.</p>
+      <div class="estrada" id="estrada"></div>
+    </section>
+
+    <section class="painel" id="painel-pedagios">
+      <h2><span class="num">5</span> Pedágios da rota</h2>
+      <p class="sub">O cálculo automático de praças de pedágio depende de uma API paga (ex: Rotas Brasil, Qualp ou TollGuru — veja o comentário no código-fonte para plugar sua chave). Por enquanto, adicione manualmente os valores que encontrar no <a href="https://qualp.com.br" target="_blank" rel="noopener">Qualp</a> ou <a href="https://www.brasilpedagios.com" target="_blank" rel="noopener">Brasil Pedágios</a> e o total é somado automaticamente.</p>
+      <table class="pedagios" id="tabela-pedagios">
+        <thead><tr><th>Praça de pedágio</th><th>KM aprox.</th><th>Valor (R$)</th><th></th></tr></thead>
+        <tbody id="corpo-pedagios"></tbody>
+      </table>
+      <button class="btn-sec" onclick="adicionarPedagio()">+ Adicionar pedágio</button>
+      <div class="total-pedagio">Total de pedágios: <strong id="total-pedagio-valor" class="mono">R$ 0,00</strong></div>
+    </section>
+
+    <section class="painel">
+      <h2><span class="num">6</span> Checklist da família</h2>
+      <div class="checklist" id="checklist"></div>
+    </section>
+
+    <section class="painel">
+      <h2><span class="num">7</span> Assistente de sugestões (IA)</h2>
+      <p class="sub">Peça dicas de paradas, atividades para as crianças, o que levar, restaurantes na região etc. Usa a OpenAI via seu proxy (se configurado) ou a IA embutida automaticamente.</p>
+      <div class="chat-box" id="chat-box"></div>
+      <div class="chat-input">
+        <input type="text" id="chat-pergunta" placeholder="Ex: sugestões de paradas com playground no caminho">
+        <button class="btn-sec" onclick="perguntarIA()">Perguntar</button>
+      </div>
+    </section>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn-sec" onclick="window.print()">🖨️ Imprimir / salvar roteiro em PDF</button>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>Rota Certa — feito para viagens de família tranquilas e seguras. Distâncias sem chave de mapa são estimativas.</footer>
+
+<script>
+/* =========================================================================
+   BASE DE CARROS — consumo médio estrada (km/l gasolina) e tanque (L).
+   Ajuste livremente ou plugue uma API de fichas técnicas se quiser mais precisão.
+   ========================================================================= */
+const BASE_CARROS = {
+  "Fiat Mobi":            {consumo:15.5, tanque:47},
+  "Fiat Argo":             {consumo:13.8, tanque:48},
+  "Fiat Pulse":            {consumo:13.0, tanque:47},
+  "Fiat Strada":           {consumo:13.5, tanque:53},
+  "Chevrolet Onix":        {consumo:15.8, tanque:44},
+  "Chevrolet Tracker":     {consumo:13.2, tanque:44},
+  "Volkswagen Gol":        {consumo:14.0, tanque:55},
+  "Volkswagen Polo":       {consumo:14.5, tanque:50},
+  "Volkswagen T-Cross":    {consumo:12.8, tanque:52},
+  "Hyundai HB20":          {consumo:14.6, tanque:50},
+  "Hyundai Creta":         {consumo:12.5, tanque:50},
+  "Toyota Corolla":        {consumo:13.9, tanque:50},
+  "Toyota Yaris":          {consumo:14.8, tanque:42},
+  "Toyota Corolla Cross":  {consumo:13.0, tanque:47},
+  "Honda Civic":           {consumo:13.6, tanque:47},
+  "Honda HR-V":            {consumo:12.9, tanque:50},
+  "Jeep Renegade":         {consumo:12.0, tanque:60},
+  "Jeep Compass":          {consumo:11.5, tanque:60},
+  "Renault Kwid":          {consumo:16.5, tanque:37},
+  "Nissan Kicks":          {consumo:13.0, tanque:41},
+  "Outro / não listado":   {consumo:12.0, tanque:50}
+};
+
+const el = id => document.getElementById(id);
+
+/* -------- popular select de carros -------- */
+(function initSelectCarros(){
+  const sel = el('modelo-carro');
+  Object.keys(BASE_CARROS).forEach(nome=>{
+    const opt = document.createElement('option');
+    opt.value = nome; opt.textContent = nome;
+    sel.appendChild(opt);
+  });
+})();
+function preencherConsumo(){
+  const dados = BASE_CARROS[el('modelo-carro').value];
+  if(!dados) return;
+  el('consumo').value = dados.consumo;
+  el('tanque').value = dados.tanque;
+}
+preencherConsumo();
+
+/* -------- alternância carro / avião -------- */
+let modoAtual = 'carro';
+function definirModo(m){
+  modoAtual = m;
+  el('btn-modo-carro').classList.toggle('ativo', m==='carro');
+  el('btn-modo-aviao').classList.toggle('ativo', m==='aviao');
+  el('campos-carro').style.display = m==='carro' ? '' : 'none';
+  el('campos-aviao').style.display = m==='aviao' ? '' : 'none';
+  el('painel-pedagios').style.display = m==='carro' ? '' : 'none';
+}
+
+/* -------- checklist dinâmico -------- */
+function montarChecklist(){
+  const criancas = el('tem-criancas').checked;
+  const pets = el('tem-pets').checked;
+  const itens = [
+    "Documentos (RG/CNH/CRLV)","Carregador de celular / power bank","Água e lanches para a estrada",
+    "Kit de primeiros socorros","Estepe, macaco e chave de roda calibrados","Pneus e óleo revisados antes de sair",
+    "Dinheiro/tag para pedágio","Seguro do veículo e assistência 24h"
+  ];
+  if(modoAtual==='carro'){
+    itens.push("Triângulo e colete refletivo");
+  } else {
+    itens.push("Check-in online feito","Bagagem dentro do limite de peso");
+  }
+  if(criancas) itens.push("Cadeirinha/bebê conforto instalado","Brinquedos e atividades para o trajeto","Remédios infantis de uso comum");
+  if(pets) itens.push("Caixa de transporte / cinto para pet","Água, ração e coleira extra para o pet");
+
+  const cont = el('checklist');
+  cont.innerHTML = '';
+  itens.forEach((texto,i)=>{
+    const id = 'chk-'+i;
+    const div = document.createElement('label');
+    div.className = 'item-check';
+    div.htmlFor = id;
+    div.innerHTML = `<input type="checkbox" id="${id}"><span>${texto}</span>`;
+    div.querySelector('input').addEventListener('change', e=>{
+      div.classList.toggle('feito', e.target.checked);
+    });
+    cont.appendChild(div);
+  });
+}
+
+/* -------- pedágios (linhas manuais) -------- */
+function adicionarPedagio(nome='', km='', valor=''){
+  const tbody = el('corpo-pedagios');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" value="${nome}" placeholder="Ex: Praça Km 45 - Via Dutra"></td>
+    <td><input type="number" value="${km}" style="width:80px"></td>
+    <td><input type="number" step="0.01" value="${valor}" style="width:90px" onchange="somarPedagios()"></td>
+    <td class="rm"><button onclick="this.closest('tr').remove(); somarPedagios();">✕</button></td>`;
+  tbody.appendChild(tr);
+  somarPedagios();
+}
+function somarPedagios(){
+  let total = 0;
+  document.querySelectorAll('#corpo-pedagios tr').forEach(tr=>{
+    const v = parseFloat(tr.children[2].querySelector('input').value)||0;
+    total += v;
+  });
+  el('total-pedagio-valor').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+  return total;
+}
+
+/* -------- geocodificação e clima via Open-Meteo (gratuito, sem chave) -------- */
+async function geocodificar(nomeCidade){
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(nomeCidade)}&count=1&language=pt&format=json`;
+  const r = await fetch(url);
+  const j = await r.json();
+  if(!j.results || !j.results.length) throw new Error(`"${nomeCidade}" não encontrado. Use o nome de uma cidade ou município — ex: "Penha, SC" em vez de "Beto Carreiro World", ou "Ubatuba, SP" em vez do nome do hotel.`);
+  const res = j.results[0];
+  return {lat:res.latitude, lon:res.longitude, nome:`${res.name}${res.admin1? ', '+res.admin1:''}`};
+}
+
+function haversineKm(lat1,lon1,lat2,lon2){
+  const R=6371, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+const CODIGOS_CLIMA = {
+  0:['☀️','Céu limpo'],1:['🌤️','Poucas nuvens'],2:['⛅','Parcialmente nublado'],3:['☁️','Nublado'],
+  45:['🌫️','Neblina'],48:['🌫️','Neblina com geada'],
+  51:['🌦️','Garoa leve'],53:['🌦️','Garoa moderada'],55:['🌧️','Garoa intensa'],57:['🌧️','Garoa gelada'],
+  61:['🌧️','Chuva leve'],63:['🌧️','Chuva moderada'],65:['🌧️','Chuva forte'],67:['🌧️','Chuva gelada'],
+  71:['🌨️','Neve leve'],73:['🌨️','Neve moderada'],75:['🌨️','Neve intensa'],77:['🌨️','Granizo fino'],
+  80:['🌦️','Pancadas leves'],81:['🌧️','Pancadas moderadas'],82:['🌧️','Pancadas fortes'],
+  85:['🌨️','Pancadas de neve leve'],86:['🌨️','Pancadas de neve forte'],
+  95:['⛈️','Trovoadas'],96:['⛈️','Trovoadas c/ granizo'],99:['⛈️','Trovoadas c/ granizo forte']
+};
+
+async function buscarClima(lat,lon,dataISO){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
+  const r = await fetch(url);
+  const j = await r.json();
+  const dia = (dataISO||'').slice(0,10);
+  let idx = j.daily.time.indexOf(dia);
+  if(idx === -1) idx = 0; // fora do alcance da previsão (>16 dias): mostra o dia mais próximo disponível
+  return {
+    dataUsada: j.daily.time[idx],
+    codigo: j.daily.weathercode[idx],
+    max: j.daily.temperature_2m_max[idx],
+    min: j.daily.temperature_2m_min[idx],
+    chuva: j.daily.precipitation_probability_max[idx],
+    foraDoAlcance: j.daily.time.indexOf(dia) === -1
+  };
+}
+
+/* -------- planejamento principal -------- */
+async function planejarViagem(){
+  const btn = el('btn-planejar');
+  btn.disabled = true; btn.textContent = 'Buscando localizações…';
+  try{
+    const origemTxt = el('origem').value.trim();
+    const destinoTxt = el('destino').value.trim();
+    if(!origemTxt || !destinoTxt){ alert('Preencha origem e destino.'); return; }
+    const partidaISO = el('data-partida').value;
+    if(!partidaISO){ alert('Preencha a data e hora de partida.'); return; }
+    const pessoas = parseInt(el('pessoas').value)||1;
+
+    const origem = await geocodificar(origemTxt);
+    const destino = await geocodificar(destinoTxt);
+    btn.textContent = 'Calculando rota…';
+
+    let distanciaKm, duracaoHoras, fonteRota = 'estimativa em linha reta (sem chave de mapa)';
+    const chaveGoogle = el('chave-google').value.trim();
+
+    if(chaveGoogle){
+      try{
+        const rota = await calcularRotaGoogle(origem, destino, chaveGoogle);
+        distanciaKm = rota.distanciaKm; duracaoHoras = rota.duracaoHoras;
+        fonteRota = 'rota rodoviária real (Google Maps)';
+      }catch(e){
+        console.warn('Falha na Google Directions API, usando estimativa.', e);
+        const reta = haversineKm(origem.lat,origem.lon,destino.lat,destino.lon);
+        distanciaKm = reta*1.25; duracaoHoras = distanciaKm/85;
+      }
+    } else {
+      const reta = haversineKm(origem.lat,origem.lon,destino.lat,destino.lon);
+      distanciaKm = reta*1.25; // fator médio de curvas de estrada
+      duracaoHoras = distanciaKm/85; // velocidade média de viagem assumida
+    }
+
+    montarChecklist();
+
+    if(modoAtual === 'carro'){
+      renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO,fonteRota,pessoas});
+    } else {
+      renderizarModoAviao({origem,destino,partidaISO,pessoas});
+    }
+
+    btn.textContent = 'Buscando previsão do tempo…';
+    // clima do destino (independente do modo)
+    const dataChegadaAprox = modoAtual==='carro'
+      ? new Date(new Date(partidaISO||Date.now()).getTime() + duracaoHoras*3600000).toISOString()
+      : (el('voo-horario').value || partidaISO || new Date().toISOString());
+    const clima = await buscarClima(destino.lat, destino.lon, dataChegadaAprox);
+    renderClima(clima, destino.nome);
+
+    el('resultado').style.display = 'block';
+    el('resultado').scrollIntoView({behavior:'smooth'});
+  }catch(err){
+    console.error(err);
+    alert('Não foi possível gerar o roteiro: ' + err.message);
+  }finally{
+    btn.disabled = false; btn.textContent = 'Gerar roteiro da viagem';
+  }
+}
+
+/* -------- integração opcional Google Maps Directions -------- */
+function calcularRotaGoogle(origem, destino, chave){
+  return new Promise((resolve,reject)=>{
+    if(window.google && window.google.maps){ return usarDirectionsService(); }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${chave}&libraries=places&callback=__googleMapsPronto`;
+    window.__googleMapsPronto = usarDirectionsService;
+    script.onerror = ()=>reject(new Error('Não foi possível carregar a Google Maps API (verifique a chave).'));
+    document.head.appendChild(script);
+
+    function usarDirectionsService(){
+      const svc = new google.maps.DirectionsService();
+      svc.route({
+        origin: {lat:origem.lat, lng:origem.lon},
+        destination: {lat:destino.lat, lng:destino.lon},
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true
+      }, (res, status)=>{
+        if(status !== 'OK'){ reject(new Error('Directions API: '+status)); return; }
+        const leg = res.routes[0].legs[0];
+        resolve({
+          distanciaKm: leg.distance.value/1000,
+          duracaoHoras: leg.duration.value/3600,
+          alternativas: res.routes.length
+        });
+      });
+    }
+  });
+}
+/* Para pedágios automáticos, plugue aqui uma API como Rotas Brasil (rotasbrasil.com.br),
+   Qualp (qualp.com.br) ou TollGuru — todas exigem token pago. Ex de uso (pseudo-código):
+   const r = await fetch(`https://rotasbrasil.com.br/apiRotas/coordenadas/?pontos=${lonLat1};${lonLat2}&veiculo=auto&token=SEU_TOKEN`);
+   e então popule a tabela #corpo-pedagios com adicionarPedagio(nome, km, valor) para cada praça. */
+
+/* -------- render: resumo + roteiro (modo carro) -------- */
+function renderizarModoCarro({origem,destino,distanciaKm,duracaoHoras,partidaISO,fonteRota,pessoas}){
+  const consumo = parseFloat(el('consumo').value)||12;
+  const tanque = parseFloat(el('tanque').value)||50;
+  const precoLitro = parseFloat(el('preco-combustivel').value)||0;
+  const minutosParada = parseFloat(el('minutos-parada').value)||20;
+  const intervaloHoras = parseFloat(el('intervalo-parada').value)||2;
+
+  const litrosNecessarios = distanciaKm/consumo;
+  const custoCombustivel = litrosNecessarios*precoLitro;
+  const autonomiaTanque = tanque*consumo;
+  const reabastecimentos = Math.max(0, Math.ceil(distanciaKm/autonomiaTanque) - 1);
+
+  const numParadas = Math.max(0, Math.floor(duracaoHoras/intervaloHoras));
+  const tempoTotalParadasHoras = numParadas*minutosParada/60;
+  const duracaoTotalHoras = duracaoHoras + tempoTotalParadasHoras;
+
+  const partida = partidaISO ? new Date(partidaISO) : new Date();
+  const chegada = new Date(partida.getTime() + duracaoTotalHoras*3600000);
+
+  // resumo
+  el('resumo-grid').innerHTML = `
+    ${cardResumo('Distância', distanciaKm.toFixed(0)+' km', fonteRota)}
+    ${cardResumo('Tempo de estrada', formatarHoras(duracaoHoras), 'sem contar paradas')}
+    ${cardResumo('Chegada prevista', formatarDataHora(chegada), formatarHoras(duracaoTotalHoras)+' com paradas', 'verde')}
+    ${cardResumo('Combustível', 'R$ '+custoCombustivel.toFixed(2).replace('.',','), litrosNecessarios.toFixed(0)+' litros')}
+    ${cardResumo('Reabastecimentos', reabastecimentos+'x no caminho', 'autonomia ~'+autonomiaTanque.toFixed(0)+' km · saindo com tanque cheio')}
+    ${cardResumo('Pessoas a bordo', pessoas, modoAtual)}
+  `;
+
+  // roteiro / estrada
+  const estrada = el('estrada');
+  estrada.innerHTML = '';
+  estrada.appendChild(criarParada({
+    tipo:'partida', km:0, titulo:'Partida — '+origem.nome,
+    horario: formatarDataHora(partida),
+    desc: 'Saída da viagem. Confira o checklist antes de sair.',
+    tags:['início']
+  }));
+
+  let horaCursor = new Date(partida);
+  for(let i=1;i<=numParadas;i++){
+    const kmParada = Math.round((distanciaKm/(numParadas+1))*i);
+    horaCursor = new Date(partida.getTime() + (intervaloHoras*i)*3600000 + (minutosParada*(i-1))*60000);
+    estrada.appendChild(criarParada({
+      tipo:'parada', km:kmParada, titulo:'Parada de descanso '+i,
+      horario: formatarDataHora(horaCursor)+ ' · '+minutosParada+' min',
+      desc: 'Aproveite para esticar as pernas, ir ao banheiro e verificar o nível de combustível. Procure postos com estrutura para família nesta região.',
+      tags: montarTagsParada()
+    }));
+  }
+
+  estrada.appendChild(criarParada({
+    tipo:'chegada', km:Math.round(distanciaKm), titulo:'Chegada — '+destino.nome,
+    horario: formatarDataHora(chegada),
+    desc: 'Fim do trajeto. Bem-vindos ao destino!',
+    tags:['fim']
+  }));
+
+  // limpar/preencher tabela de pedágios se ainda vazia
+  if(el('corpo-pedagios').children.length === 0){
+    adicionarPedagio('', Math.round(distanciaKm*0.3), '');
+  }
+}
+
+function montarTagsParada(){
+  const tags = ['banheiro','combustível'];
+  if(el('tem-criancas').checked) tags.push('playground');
+  if(el('tem-pets').checked) tags.push('pet-friendly');
+  return tags;
+}
+
+/* -------- render: modo avião -------- */
+function renderizarModoAviao({origem,destino,partidaISO,pessoas}){
+  const vooNumero = el('voo-numero').value || '—';
+  const vooHorario = el('voo-horario').value ? new Date(el('voo-horario').value) : null;
+  const vooTipo = el('voo-tipo').value;
+  const antecedenciaHoras = vooTipo === 'internacional' ? 3 : 2;
+  const horarioChegadaAeroporto = vooHorario ? new Date(vooHorario.getTime() - antecedenciaHoras*3600000) : null;
+
+  el('resumo-grid').innerHTML = `
+    ${cardResumo('Voo', vooNumero, vooTipo)}
+    ${cardResumo('Embarque', vooHorario? formatarDataHora(vooHorario):'—', '')}
+    ${cardResumo('Chegar no aeroporto até', horarioChegadaAeroporto? formatarDataHora(horarioChegadaAeroporto):'—', antecedenciaHoras+'h de antecedência', 'verde')}
+    ${cardResumo('Pessoas a bordo', pessoas, 'avião')}
+  `;
+
+  const estrada = el('estrada');
+  estrada.innerHTML = '';
+  estrada.appendChild(criarParada({
+    tipo:'partida', km:'', titulo:'Saída de casa — '+origem.nome,
+    horario: horarioChegadaAeroporto? 'Saia com folga para chegar às '+formatarDataHora(horarioChegadaAeroporto): '',
+    desc:'Considere o trânsito até o aeroporto e o tempo de estacionamento/embarque.', tags:['início']
+  }));
+  estrada.appendChild(criarParada({
+    tipo:'parada', km:'', titulo:'Check-in e despacho de bagagem',
+    horario: horarioChegadaAeroporto? formatarDataHora(horarioChegadaAeroporto):'',
+    desc:'Confirme o check-in online antes, se disponível, para agilizar a fila.', tags:['aeroporto']
+  }));
+  estrada.appendChild(criarParada({
+    tipo:'chegada', km:'', titulo:'Chegada — '+destino.nome,
+    horario: vooHorario ? 'Após embarque às '+formatarDataHora(vooHorario) : 'Consulte o bilhete',
+    desc:'Fim do trajeto aéreo. Verifique o transporte do aeroporto até o destino final.', tags:['fim']
+  }));
+}
+
+/* -------- clima -------- */
+function renderClima(clima, nomeLocal){
+  const [icone,desc] = CODIGOS_CLIMA[clima.codigo] || ['❔','Sem dados'];
+  el('clima-area').innerHTML = `
+    <div class="icone">${icone}</div>
+    <div>
+      <div class="rotulo">${nomeLocal} — ${clima.dataUsada}</div>
+      <div class="valor" style="font-size:20px;">${desc}, ${Math.round(clima.min)}° a ${Math.round(clima.max)}°C</div>
+      <div class="extra">${clima.chuva}% de chance de chuva${clima.foraDoAlcance? ' · previsão aproximada (data fora do alcance de 16 dias)':''}</div>
+    </div>`;
+}
+
+/* -------- helpers de UI -------- */
+/* Escapa strings para inserção segura em innerHTML (evita XSS) */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function cardResumo(rotulo,valor,extra,cor=''){
+  return `<div class="resumo-card"><div class="rotulo">${esc(rotulo)}</div><div class="valor ${esc(cor)}">${esc(String(valor))}</div>${extra?`<div class="extra">${esc(String(extra))}</div>`:''}</div>`;
+}
+function criarParada({tipo,km,titulo,horario,desc,tags}){
+  const div = document.createElement('div');
+  div.className = 'parada '+tipo;
+  div.innerHTML = `
+    <div class="topo-parada">
+      <h3>${esc(titulo)}</h3>
+      <span class="horario">${esc(horario||'')}</span>
+    </div>
+    ${km!==''? `<div class="km">KM ${esc(String(km))}</div>`:''}
+    <p>${esc(desc)}</p>
+    ${(tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+  `;
+  return div;
+}
+function formatarHoras(h){
+  const inteiras = Math.floor(h), minutos = Math.round((h-inteiras)*60);
+  return `${inteiras}h${minutos.toString().padStart(2,'0')}`;
+}
+function formatarDataHora(d){
+  return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+/* -------- assistente IA (OpenAI, opcional) -------- */
+function adicionarMsg(texto, quem){
+  const box = el('chat-box');
+  const div = document.createElement('div');
+  div.className = 'msg '+quem;
+  div.textContent = texto;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+/* Assistente de IA:
+   1) Se o campo #proxy-ia tiver uma URL (seu Cloudflare Worker), usa a OpenAI através dele —
+      a chave fica só no servidor do Worker, nunca no navegador.
+   2) Caso contrário, usa a API da Anthropic já embutida quando esta página roda dentro do
+      Claude (claude.ai) como artifact — não precisa de nenhuma chave.
+   Chamadas diretas do navegador para api.openai.com são bloqueadas por CORS, por isso não
+   fazemos fetch direto para lá — sempre passamos pelo proxy. */
+async function perguntarIA(){
+  const pergunta = el('chat-pergunta').value.trim();
+  if(!pergunta) return;
+  adicionarMsg(pergunta,'user');
+  el('chat-pergunta').value = '';
+  adicionarMsg('Pensando…','ia');
+  const box = el('chat-box');
+  const contexto = `Viagem de ${el('origem').value} para ${el('destino').value}, ${el('pessoas').value} pessoas, `+
+    `${el('tem-criancas').checked?'com crianças, ':''}${el('tem-pets').checked?'com pet, ':''}modo ${modoAtual}.`;
+  const proxyUrl = el('proxy-ia').value.trim();
+
+  try{
+    let texto;
+    if(proxyUrl){
+      texto = await perguntarViaProxyOpenAI(proxyUrl, contexto, pergunta);
+    } else {
+      texto = await perguntarViaAnthropicEmbutida(contexto, pergunta);
+    }
+    box.lastChild.remove();
+    adicionarMsg(texto || 'Sem resposta.', 'ia');
+  }catch(err){
+    box.lastChild.remove();
+    adicionarMsg('Não consegui responder agora: '+err.message, 'ia');
+  }
+}
+
+async function perguntarViaProxyOpenAI(proxyUrl, contexto, pergunta){
+  const resp = await fetch(proxyUrl, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({contexto, pergunta})
+  });
+  const data = await resp.json().catch(()=>({}));
+  if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
+  return (data.texto || '').trim();
+}
+
+async function perguntarViaAnthropicEmbutida(contexto, pergunta){
+  /* Nota: chamadas diretas a api.anthropic.com são bloqueadas por CORS em navegadores comuns.
+     Esta função só funciona quando a página roda como artifact dentro do Claude.ai.
+     Para usar em qualquer outro ambiente, configure o proxy da OpenAI nas configurações avançadas. */
+  const resp = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'anthropic-version':'2023-06-01'
+    },
+    body: JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens: 500,
+      messages:[
+        {role:'user', content:'Você é um assistente de viagens de família no Brasil. Seja objetivo, prático e priorize segurança e conforto para crianças quando aplicável. Responda curto, em português.\n\n'+contexto+'\n\nPergunta: '+pergunta}
+      ]
+    })
+  });
+  if(!resp.ok){
+    const status = resp.status;
+    if(status === 401)
+      throw new Error('Autenticação necessária. Configure o proxy da OpenAI nas configurações avançadas para usar o assistente.');
+    throw new Error(`Erro HTTP ${status} ao contatar a IA. Configure o proxy da OpenAI nas configurações avançadas.`);
+  }
+  const data = await resp.json();
+  return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+}
+el('chat-pergunta').addEventListener('keydown', e=>{ if(e.key==='Enter') perguntarIA(); });
+
+/* estado inicial — tabela de pedágios começa vazia; a primeira linha é adicionada ao gerar o roteiro */
+</script>
+</body>
+</html>
